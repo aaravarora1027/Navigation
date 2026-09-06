@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 1 | Air Navigation</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+
+        /* QUIZ & NUMERICALS STYLING */
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
+        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .option-btn:disabled { cursor: default; }
+        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
+        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
+        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        #finish-screen { text-align: center; padding-top: 40px; }
+        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
+        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- 1. MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 1: The Earth</h2>
+                <!-- Points back to the main hub -->
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="initQuiz()">
+                    <h3>Quiz</h3>
+                    <p>19 Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals</h3>
+                    <p>10 Calculation Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. QUIZ PAGE -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Question 1 of X</h2>
+                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="options-grid" id="quiz-options-container"></div>
+                <div id="quiz-feedback-box" class="feedback-box"></div>
+            </div>
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- 3. QUIZ FINISH SCREEN -->
+        <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
+            <div id="finish-screen" style="display: block;">
+                <h1>Quiz Complete!</h1>
+                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. NUMERICALS LINEAR FLOW PAGE -->
+        <div id="numerical-linear-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Numerical 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
+            </div>
+
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // SPA NAVIGATION LOGIC
+        // ==========================================
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // DATA BANK: MCQs (CHAPTER 1)
+        // ==========================================
+        const quizData = [ 
+            { q: "The distance around the Earth along the Equator and around the meridian and antemeridian is:", options: { a: "Exactly the same", b: "Along Equator is more", c: "Around the Poles is more" }, ans: "b" },
+            { q: "The Earth rotates about its:", options: { a: "Polar diameter", b: "Equatorial diameter", c: "Sometimes around the Polar and sometimes around the Equatorial diameter" }, ans: "a" },
+            { q: "The cardinal points are:", options: { a: "North, West", b: "South, East", c: "All the above" }, ans: "c" },
+            { q: "Graticule is the network of meridians and parallels on:", options: { a: "Earth", b: "Maps", c: "Both" }, ans: "b" },
+            { q: "The maximum difference between geocentric and geodetic latitude occurs at about:", options: { a: "90&deg; North and South", b: "60&deg; North and South", c: "45&deg; North and South", d: "0&deg; North and South (equator)" }, ans: "c" },
+            { q: "A great circle is any circle on the surface of the Earth whose:", options: { a: "radius is the same as that of the Earth", b: "plane passes through the center of the Earth", c: "both" }, ans: "c" },
+            { q: "The shortest distance between any two points on the Earth is defined by:", options: { a: "a straight line joining the two places on a map", b: "the shorter arc of the great circle joining the two places", c: "the rhumb line joining the two places" }, ans: "b" },
+            { q: "A meridian is a:", options: { a: "Semi great circle", b: "Line joining places of the same latitude", c: "Semi great circle joining places of same longitude" }, ans: "c" },
+            { q: "For measuring latitude, the datum used is:", options: { a: "Equator", b: "Prime meridian", c: "the Pole" }, ans: "a" },
+            { q: "Latitude is expressed in degrees, minutes and seconds to the North or South of:", options: { a: "the Pole", b: "Equator", c: "Greenwich meridian" }, ans: "b" },
+            { q: "Place A on 57N 176&deg;W & Place B 60N 177&deg;E. Calculate dlong and approximate heading from B to A?", options: { a: "351&deg; and 310&deg;", b: "7&deg; and 130&deg;", c: "7&deg; and 310&deg;" }, ans: "b" },
+            { q: "The only line on the Earth which is both Great Circle and rhumb line is:", options: { a: "meridians", b: "equator", c: "both" }, ans: "b" },
+            { q: "The datum for measuring Longitude is called:", options: { a: "the Prime Meridian", b: "the Prime Latitude", c: "the Equator" }, ans: "a" },
+            { q: "The maximum Latitude can be as much as:", options: { a: "90&deg;", b: "180&deg;", c: "360&deg;" }, ans: "a" },
+            { q: "Parallels of Latitude and Meridians of longitude on the Earth:", options: { a: "can be distinctly identified when map reading", b: "are only imaginary lines and so are not marked on the Earth", c: "Only global satellites can identify them on the Earth" }, ans: "b" },
+            { q: "Earth is a:", options: { a: "Planet", b: "Satellite", c: "Asteroid" }, ans: "a" },
+            { q: "Distance of one NM at equator approximately is:", options: { a: "6105'", b: "6076'", c: "6046'" }, ans: "c" },
+            { q: "The earth may be referred to as:", options: { a: "round", b: "an oblate spheroid", c: "a globe", d: "elliptical" }, ans: "b" },
+            { q: "The Earth is:", options: { a: "A sphere which has a larger polar circumference than equatorial circumference", b: "A sphere whose centre is equidistant from the Poles and the Equator", c: "Considered to be a perfect sphere as far as navigation is concerned", d: "None of the above statements is correct" }, ans: "c" }
+        ];
+
+        let activeQuizData = [], userAnswers = [], currentQIndex = 0;
+
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        function initQuiz() { 
+            switchView('quiz-page');
+            activeQuizData = JSON.parse(JSON.stringify(quizData)); 
+            shuffleArray(activeQuizData); 
+            activeQuizData.forEach(q => { 
+                let optionsArr = Object.entries(q.options).map(([key, val]) => ({ key, val })); 
+                shuffleArray(optionsArr); 
+                q.shuffledOptions = optionsArr; 
+            }); 
+            userAnswers = new Array(activeQuizData.length).fill(null); 
+            currentQIndex = 0; 
+            renderQuestion(); 
+        }
+
+        function updateScore() { 
+            let currentScore = 0; 
+            userAnswers.forEach((ans, index) => { 
+                if (ans === activeQuizData[index].ans) { currentScore++; } 
+            }); 
+            document.getElementById('quiz-score-display').textContent = currentScore; 
+            return currentScore; 
+        }
+
+        function renderQuestion() { 
+            if(activeQuizData.length === 0) return;
+            const qData = activeQuizData[currentQIndex]; 
+            const selectedAns = userAnswers[currentQIndex]; 
+
+            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+            document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
+            document.getElementById('quiz-q-text').innerHTML = qData.q; 
+            updateScore(); 
+
+            const optionsContainer = document.getElementById('quiz-options-container'); 
+            optionsContainer.innerHTML = ''; 
+            qData.shuffledOptions.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = 'option-btn'; 
+                btn.id = `btn-${opt.key}`; 
+
+                // IMPORTANT FIX: Using .innerHTML here so that &deg; formats properly as °
+                btn.innerHTML = opt.val; 
+
+                if (selectedAns !== null) { 
+                    btn.disabled = true; 
+                    if (opt.key === qData.ans) { 
+                        btn.classList.add('correct-ans'); 
+                    } else if (opt.key === selectedAns && selectedAns !== qData.ans) { 
+                        btn.classList.add('wrong-ans'); 
+                    } 
+                } else { 
+                    btn.onclick = () => { 
+                        userAnswers[currentQIndex] = opt.key; 
+                        renderQuestion(); 
+                    }; 
+                } 
+                optionsContainer.appendChild(btn); 
+            }); 
+
+            const feedbackBox = document.getElementById('quiz-feedback-box'); 
+            feedbackBox.className = 'feedback-box'; 
+            if (selectedAns !== null) { 
+                if (selectedAns === qData.ans) { 
+                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.classList.add('feedback-correct'); 
+                } else { 
+                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.classList.add('feedback-wrong'); 
+                } 
+            } else {
+                feedbackBox.style.display = 'none';
+            }
+
+            document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
+            const nextBtn = document.getElementById('quiz-next-btn'); 
+            if (selectedAns === null) { 
+                nextBtn.disabled = true; 
+                nextBtn.textContent = "Next"; 
+            } else { 
+                nextBtn.disabled = false; 
+                nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; 
+            } 
+        }
+
+        function goPrevQuiz() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+        function goNextQuiz() { 
+            if (currentQIndex < activeQuizData.length - 1) { 
+                currentQIndex++; renderQuestion(); 
+            } else { 
+                switchView('quiz-finish-screen'); 
+                document.getElementById('final-score').textContent = updateScore(); 
+                document.getElementById('total-questions').textContent = activeQuizData.length; 
+            } 
+        }
+
+        // ==========================================
+        // DATA BANK: NUMERICALS (CHAPTER 1)
+        // ==========================================
+        const numericalsData = [
+            { q: "Calculate the d'long between position A 165&deg;W and position B 103&deg;W. Aircraft is flying from A to B.", ans: "62&deg;E", sol: "Both are in the same hemisphere (West).<br>165&deg; - 103&deg; = 62&deg;<br>Flying from 165&deg;W to 103&deg;W is traveling East.<br><strong>D'long = 62&deg;E</strong>" },
+            { q: "Calculate the d'long between A 165&deg;W and B 170&deg;E. Aircraft is flying from A to B.", ans: "25&deg;W", sol: "Difference between 165&deg;W and 180&deg; is 15&deg;.<br>Difference between 170&deg;E and 180&deg; is 10&deg;.<br>15&deg; + 10&deg; = 25&deg;.<br>Because the movement is clockwise across the anti-meridian, the direction is West.<br><strong>D'long = 25&deg;W</strong>" },
+            { q: "The ratio of the ellipticity of the earth is 1/297, if the major axis is 6956 km at the equator, what is the minor axis (poles)?", ans: "6932.58 km", sol: "Ratio of Ellipticity = 1 / 297<br>(Major axis - Minor axis) / Major axis = 1 / 297<br>(6956 - x) / 6956 = 1 / 297<br>6956 - x = 6956 / 297<br>6956 - x = 23.42<br>6956 - 23.42 = x<br><strong>x = 6932.58 km</strong>" },
+            { q: "Point A is 20&deg;30'N and point B 41&deg;30'S. If an aircraft is traveling from A and B, what is the d'lat?", ans: "62&deg;", sol: "Convert degrees to minutes for precision:<br>A = 20&deg;30'N = (20 &times; 60) + 30 = 1230'<br>B = 41&deg;30'S = (41 &times; 60) + 30 = 2490'<br>Total Dlat in minutes = 2490' + 1230' = 3720'<br>Convert back to degrees: 3720 / 60 = 62&deg;<br><strong>D'lat = 62&deg;</strong>" },
+            { q: "Given: Value for the ellipticity of the Earth is 1/297. Earth's semi-major axis, as measured at the equator, equals 6378.4 km. What is the semi-minor axis (km) of the earth at the axis of the Poles?", ans: "6356.9 km", sol: "Ratio of Ellipticity = 1 / 297<br>(Semi-major axis - Semi-minor axis) / Semi-major axis = 1 / 297<br>(6378.4 - x) / 6378.4 = 1 / 297<br>6378.4 - x = 6378.4 / 297<br>6378.4 - x = 21.476<br><strong>x = 6356.9 km</strong>" },
+            { q: "At what approximate latitude is the length of one minute of arc along a meridian equal to one NM (1852 m) correct?", ans: "45&deg;", sol: "Due to the oblateness (flattening) of the Earth, the physical length of 1 minute of arc of latitude varies slightly from the equator to the poles.<br><br>It exactly equals the standard Nautical Mile (1852 meters) at approximately <strong>45&deg; Latitude</strong>." },
+            { q: "The circumference of the Earth is approximately:", ans: "21,600 NM (40,000 km)", sol: "The Earth consists of 360 degrees of longitude.<br>At the equator, 1 degree of longitude equals 60 NM.<br><br>Circumference = 360 &times; 60 = <strong>21,600 NM</strong>.<br>In metric units, this converts to approximately <strong>40,000 km</strong>." },
+            { q: "The circumference of the parallel of latitude at 60&deg;N is approximately:", ans: "10,800 NM", sol: "Formula: Circumference at Latitude = Equatorial Circumference &times; cos(Lat)<br><br>Circumference = 21,600 &times; cos(60&deg;)<br>Circumference = 21,600 &times; 0.5<br><strong>Circumference = 10,800 NM</strong>" },
+            { q: "If an aeroplane was to circle around the Earth following parallel 60&deg;N at a ground speed of 480 kt. In order to circle around the Earth along the equator in the same amount of time, it should fly at a ground speed of:", ans: "960 kt", sol: "Step 1: Find the time taken to circle at 60&deg;N.<br>Distance at 60&deg;N = 10,800 NM.<br>Time = Distance / Speed = 10,800 / 480 = 22.5 hours.<br><br>Step 2: Find required speed for the Equator.<br>Distance at Equator = 21,600 NM.<br>Speed = Distance / Time = 21,600 / 22.5<br><strong>Speed = 960 kt</strong><br><br><em>(Shortcut: Because the distance is double, the speed must be double: 480 &times; 2 = 960 kt)</em>" },
+            { q: "The diameter of the Earth is approximately:", ans: "12,700 km", sol: "You know the circumference (C) of the Earth is roughly 40,000 km.<br>Formula: C = &pi; &times; Diameter<br><br>Diameter = 40,000 / &pi;<br>Diameter = 40,000 / 3.14159 &approx; 12,732 km<br><strong>This rounds to approximately 12,700 km.</strong>" }
+        ];
+
+        let activeQuizDataNum = [], currentNumIndex = 0;
+
+        function startNumericals() { 
+            switchView('numerical-linear-page'); 
+            activeQuizDataNum = numericalsData; 
+            currentNumIndex = 0; 
+            renderNumerical(); 
+        }
+
+        function renderNumerical() { 
+            if (activeQuizDataNum.length === 0) return; 
+
+            const qData = activeQuizDataNum[currentNumIndex]; 
+            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
+            document.getElementById('num-q-text').innerHTML = qData.q; 
+
+            const ansBox = document.getElementById('num-ans-box'); 
+            ansBox.innerHTML = `<strong>Answer:</strong> ${qData.ans}`; 
+            ansBox.style.display = 'none'; 
+
+            const solBox = document.getElementById('num-sol-box'); 
+            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.style.display = 'none'; 
+
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
+            document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < activeQuizDataNum.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>
