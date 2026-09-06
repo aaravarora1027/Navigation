@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Nav Command Center</title>
+    <style>
+        /* --- CORE STYLING --- */
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #121212;
+            --text-main: #f0f0f0;
+            --text-muted: #888888;
+            --accent: #2a2a2a;
+            --accent-hover: #404040;
+            --border: #333333;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            padding: 40px; 
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .view-section {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        /* --- Landing Page --- */
+        #landing-page { justify-content: center; align-items: center; text-align: center; }
+        .title { font-size: 3.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; font-family: 'Courier New', monospace; }
+        
+        .btn {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+
+        /* --- Header & Navigation --- */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px; 
+            margin-bottom: 20px; 
+        }
+        .nav-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover { background-color: var(--accent); }
+
+        /* --- Chapter Grid --- */
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .chapter-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 90px;
+            text-decoration: none; /* Removes underline from links */
+            color: var(--text-main);
+        }
+        
+        .chapter-card:hover { 
+            background-color: var(--accent); 
+            transform: scale(1.02); 
+            border-color: var(--text-muted);
+        }
+        
+        .chapter-num { font-size: 1.1rem; font-weight: bold; }
+        .chapter-name { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- LANDING PAGE -->
+        <div id="landing-page" class="view-section" style="display: flex;">
+            <h1 class="title">Air Navigation</h1>
+            <p class="subtitle">DGCA CPL Ground School Terminal</p>
+            <button class="btn" onclick="initSystem()">Initialize System</button>
+        </div>
+
+        <!-- CHAPTERS LIST -->
+        <div id="chapters-page" class="view-section">
+            <div class="header-bar">
+                <h2>Syllabus Index</h2>
+                <button class="nav-btn" onclick="powerOff()">Power Off</button>
+            </div>
+            <div class="chapter-grid" id="chapter-grid-container">
+                <!-- JavaScript generates the 30 links here -->
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Dictionary for chapter names. We can easily add to this as we build them.
+        const chapterTitles = { 
+            1: "The Earth",
+            2: "Distances on Earth's Surface",
+            3: "Convergency",
+            4: "Payload",
+            5: "Compass & Direction",
+            6: "Dead Reckoning",
+            7: "In Flight Navigation",
+            8: "Scale & Projections",
+            9: "INS/IRS",
+            10: "Solar System & Time",
+            11: "PNR/CP"
+        };
+
+        // Automatically generate 30 Chapter Links
+        const chapterContainer = document.getElementById('chapter-grid-container');
+        for (let i = 1; i <= 30; i++) {
+            let a = document.createElement('a');
+            a.className = 'chapter-card';
+            
+            // Sets the destination to ch1.html, ch2.html, etc.
+            a.href = `ch${i}.html`; 
+            
+            let titleText = chapterTitles[i] ? `<div class="chapter-name">${chapterTitles[i]}</div>` : ``;
+            a.innerHTML = `<div class="chapter-num">CH ${i}</div> ${titleText}`;
+            
+            chapterContainer.appendChild(a);
+        }
+
+        // Simple visibility toggles for the landing page
+        function initSystem() {
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('chapters-page').style.display = 'flex';
+        }
+
+        function powerOff() {
+            document.getElementById('chapters-page').style.display = 'none';
+            document.getElementById('landing-page').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
