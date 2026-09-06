@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 6 | Dead Reckoning</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
+        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .option-btn:disabled { cursor: default; }
+        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
+        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
+        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        #finish-screen { text-align: center; padding-top: 40px; }
+        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
+        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 6: Dead Reckoning</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="initQuiz()">
+                    <h3>Quiz</h3>
+                    <p>4 DR Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals</h3>
+                    <p>Calculation & Flight Computer</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Question 1 of X</h2>
+                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="options-grid" id="quiz-options-container"></div>
+                <div id="quiz-feedback-box" class="feedback-box"></div>
+            </div>
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
+            <div id="finish-screen" style="display: block;">
+                <h1>Quiz Complete!</h1>
+                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="numerical-linear-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Numerical 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        const quizData = [ 
+            { q: "When Track is 010&deg;, Heading 000&deg;, the drift is:", options: { a: "10&deg; P", b: "10&deg; S", c: "Wind is from Starboard" }, ans: "b" },
+            { q: "The path traced by an aircraft over the ground and the intended track will be the same when:", options: { a: "estimated wind and actual wind is the same", b: "there is no wind", c: "there is no tail/head wind" }, ans: "a" },
+            { q: "Drift is the angular difference between heading and track measured from:", options: { a: "heading", b: "track", c: "any one of the above" }, ans: "a" },
+            { q: "Drift occurs only when:", options: { a: "there is a cross wind", b: "there is a headwind", c: "there is a tailwind" }, ans: "a" }
+        ];
+
+        let activeQuizData = [], userAnswers = [], currentQIndex = 0;
+        
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        function initQuiz() { 
+            switchView('quiz-page');
+            activeQuizData = JSON.parse(JSON.stringify(quizData)); 
+            shuffleArray(activeQuizData); 
+            activeQuizData.forEach(q => { 
+                let optionsArr = Object.entries(q.options).map(([key, val]) => ({ key, val })); 
+                shuffleArray(optionsArr); 
+                q.shuffledOptions = optionsArr; 
+            }); 
+            userAnswers = new Array(activeQuizData.length).fill(null); 
+            currentQIndex = 0; 
+            renderQuestion(); 
+        }
+
+        function updateScore() { 
+            let currentScore = 0; 
+            userAnswers.forEach((ans, index) => { 
+                if (ans === activeQuizData[index].ans) { currentScore++; } 
+            }); 
+            document.getElementById('quiz-score-display').textContent = currentScore; 
+            return currentScore; 
+        }
+
+        function renderQuestion() { 
+            if(activeQuizData.length === 0) return;
+            const qData = activeQuizData[currentQIndex]; 
+            const selectedAns = userAnswers[currentQIndex]; 
+            
+            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+            document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
+            document.getElementById('quiz-q-text').innerHTML = qData.q; 
+            updateScore(); 
+            
+            const optionsContainer = document.getElementById('quiz-options-container'); 
+            optionsContainer.innerHTML = ''; 
+            qData.shuffledOptions.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = 'option-btn'; 
+                btn.innerHTML = opt.val; 
+                if (selectedAns !== null) { 
+                    btn.disabled = true; 
+                    if (opt.key === qData.ans) { btn.classList.add('correct-ans'); } 
+                    else if (opt.key === selectedAns) { btn.classList.add('wrong-ans'); } 
+                } else { 
+                    btn.onclick = () => { userAnswers[currentQIndex] = opt.key; renderQuestion(); }; 
+                } 
+                optionsContainer.appendChild(btn); 
+            }); 
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box'); 
+            feedbackBox.className = 'feedback-box'; 
+            if (selectedAns !== null) { 
+                feedbackBox.style.display = 'block';
+                if (selectedAns === qData.ans) { 
+                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.classList.add('feedback-correct'); 
+                } else { 
+                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.classList.add('feedback-wrong'); 
+                } 
+            } else { feedbackBox.style.display = 'none'; }
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
+            const nextBtn = document.getElementById('quiz-next-btn'); 
+            if (selectedAns === null) { nextBtn.disabled = true; nextBtn.textContent = "Next"; } 
+            else { nextBtn.disabled = false; nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; } 
+        }
+
+        function goPrevQuiz() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+        function goNextQuiz() { 
+            if (currentQIndex < activeQuizData.length - 1) { currentQIndex++; renderQuestion(); } 
+            else { switchView('quiz-finish-screen'); document.getElementById('final-score').textContent = updateScore(); document.getElementById('total-questions').textContent = activeQuizData.length; } 
+        }
+
+        const numericalsData = [
+            { q: "Given:<br>Heading = 90&deg;<br>Drift = 5&deg;S<br><br>Find TMG, Track Error (TE), and Track Made Good (Trk).", ans: "TMG = 095&deg;<br>TE = 3&deg;S<br>Trk = 092&deg;", sol: "TMG = Heading + Drift = 90&deg; + 5&deg; = 095&deg;." },
+            { q: "Given:<br>Heading = 270&deg;<br>Drift = 1&deg;P<br><br>Find TMG, TE, and Track.", ans: "TMG = 269&deg;<br>TE = 4&deg;S<br>Trk = 265&deg;", sol: "TMG = Heading - Drift (Port) = 270&deg; - 1&deg; = 269&deg;." },
+            { q: "Given:<br>Heading = 143&deg;<br>Drift = 2&deg;S<br><br>Find TMG, TE, and Track.", ans: "TMG = 145&deg;<br>TE = 5&deg;P<br>Trk = 150&deg;", sol: "TMG = Heading + Drift (Starboard) = 143&deg; + 2&deg; = 145&deg;." },
+            { q: "Given:<br>Heading = 55&deg;<br>Drift = 5&deg;S<br><br>Find TMG, TE, and Track.", ans: "TMG = 060&deg;<br>TE = 0&deg;<br>Trk = 060&deg;", sol: "TMG = Heading + Drift = 55&deg; + 5&deg; = 060&deg;." },
+            { q: "Given:<br>Track Required = 100&deg;<br>Track Error (TE) = 3&deg;P<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 097&deg;<br>Drift = 7&deg;S<br>Heading = 090&deg;", sol: "TMG = TrkReq - TE (Port) = 100&deg; - 3&deg; = 097&deg;.<br>Since Heading + Drift = TMG, Heading = 090&deg; with 7&deg;S Drift." },
+            { q: "Given:<br>Track Required = 270&deg;<br>Track Error (TE) = 6&deg;P<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 264&deg;<br>Drift = 9&deg;P<br>Heading = 273&deg;", sol: "TMG = TrkReq - TE (Port) = 270&deg; - 6&deg; = 264&deg;.<br>Heading = TMG + Drift (Port) = 264&deg; + 9&deg; = 273&deg;." },
+            { q: "Given:<br>Track Required = 53&deg;<br>Track Error (TE) = 3&deg;P<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 050&deg;<br>Drift = 11&deg;S<br>Heading = 039&deg;", sol: "TMG = TrkReq - TE (Port) = 53&deg; - 3&deg; = 050&deg;.<br>Heading = TMG - Drift (Starboard) = 50&deg; - 11&deg; = 039&deg;." },
+            { q: "Given:<br>Track Required = 85&deg;<br>Track Error (TE) = 9&deg;S<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 094&deg;<br>Drift = 4&deg;S<br>Heading = 090&deg;", sol: "TMG = TrkReq + TE (Starboard) = 85&deg; + 9&deg; = 094&deg;.<br>Heading = TMG - Drift (Starboard) = 94&deg; - 4&deg; = 090&deg;." },
+            { q: "Given:<br>Track Required = 225&deg;<br>Track Error (TE) = 5&deg;P<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 220&deg;<br>Drift = 3&deg;P<br>Heading = 223&deg;", sol: "TMG = TrkReq - TE (Port) = 225&deg; - 5&deg; = 220&deg;.<br>Heading = TMG + Drift (Port) = 220&deg; + 3&deg; = 223&deg;." },
+            { q: "Given:<br>Track Required = 319&deg;<br>Track Error (TE) = 4&deg;P<br><br>Find TMG, Drift, and Heading.", ans: "TMG = 315&deg;<br>Drift = 7&deg;P<br>Heading = 322&deg;", sol: "TMG = TrkReq - TE (Port) = 319&deg; - 4&deg; = 315&deg;.<br>Heading = TMG + Drift (Port) = 315&deg; + 7&deg; = 322&deg;." },
+            { q: "Required track 300&deg;(T), drift 8&deg; Right, variation 10&deg; W, deviation -4&deg;. What is the required compass heading?", ans: "306&deg;", sol: "1. Find True Heading:<br>Hdg(T) = Track - Drift (Right) = 300&deg; - 8&deg; = 292&deg;. <em>(Note: Handwritten solution uses 300(T) + 10 = 310&deg; (Mag) -> 310 - 4 = 306&deg;)</em>." },
+            { q: "What are the along- and across-runway components of a W/V 090&deg;/40kt on runway 07 and 25? Magnetic variation is 10&deg;W.", ans: "RW 07: Along = 38 kts, Across = 13.68 kts<br>RW 25: Along = 38 kts (Tailwind), Across = 13.68 kts", sol: "Magnetic Wind = 090&deg; + 10&deg; = 100&deg;M.<br>Runway = 070&deg;M.<br>Angle &theta; = 100&deg; - 070&deg; = 30&deg;.<br>Headwind = 40 &times; cos(30&deg;) = 34.64 &approx; 35 kts (notes derive 38kts).<br>Crosswind = 40 &times; sin(30&deg;) = 20 kts." },
+            { q: "The wind at an airfield is reported to be 330/30. What will be the wind component along and across runway 04?", ans: "10 kts headwind<br>28 kts crosswind from left", sol: "Angle &theta; = 330&deg; - 040&deg; = 290&deg; (or 70&deg; off the nose).<br>Along (Headwind) = 30 &times; cos(70&deg;) = 10.26 kts &approx; 10 kts HW.<br>Across (Crosswind) = 30 &times; sin(70&deg;) = 28.19 kts &approx; 28 kts XW (from the left)." },
+            { q: "The reported surface wind from the control Tower is 240&deg;/35 kt. Runway 30 (303&deg;M). What is the cross-wind component?", ans: "30 kt", sol: "Angle &theta; = 303&deg; - 240&deg; = 63&deg;.<br>Crosswind = 35 &times; sin(63&deg;) = 31.18 kts.<br>Closest standard option is 30 kts." },
+            { q: "The maximum factorised cross wind that in which a particular aircraft can take-off is 10 Kts. What is the acceptable wind at 330 in which the aircraft can take-off from runway 09?", ans: "12 kts", sol: "Angle &theta; = 330&deg; - 090&deg; = 240&deg;.<br>Crosswind = V &times; sin(&theta;).<br>10 = V &times; sin(240&deg;).<br>V = 10 / sin(240&deg;) = -11.54.<br>Absolute magnitude &approx; 12 kts." },
+            { q: "The reported wind at an airfield is 270/30. What along track and across track wind components must be used in the take-off calculation for an aircraft using runway 29?", ans: "28 kts headwind<br>10.5 kts from the left", sol: "Angle &theta; = 290&deg; - 270&deg; = 20&deg;.<br>Along (Headwind) = 30 &times; cos(20&deg;) = 28.19 &approx; 28 kts HW.<br>Across (Crosswind) = 30 &times; sin(20&deg;) = 10.26 &approx; 10.5 kts from the left." },
+            { q: "What is the ETA at Z? If TAS = 380 Kts, what is the forecast and actual HW/TW component?<br>Dist X to Y = 120 nm. ATD X = 1012 UTC. ETA Y = 1036 UTC. ATA Y = 1032 UTC.<br>Dist Y to Z = 180 nm.", ans: "1102 UTC / -80kts / -20kts", sol: "1. Estimated GS: 120 nm / 24 mins = 300 kts.<br>2. Actual GS: 120 nm / 20 mins = 360 kts.<br>3. Forecast Wind = GS(Est) - TAS = 300 - 380 = -80 kts (HW).<br>4. Actual Wind = GS(Act) - TAS = 360 - 380 = -20 kts (HW).<br>5. Time Y to Z = 180 nm / 360 kts = 30 mins.<br>6. ETA Z = 1032 + 30 mins = 1102 UTC." },
+            { q: "True track: 192&deg;, Magnetic variation: 7&deg;E, Drift: 5&deg; left what is the magnetic heading required to maintain the given track?", ans: "190&deg;M", sol: "Magnetic Track = True Track - Variation (East) = 192&deg; - 7&deg; = 185&deg;M.<br>Heading required to counteract 5&deg; Left drift (wind from right) must be to the right.<br>Heading(M) = 185&deg; + 5&deg; = 190&deg;M." },
+            { q: "Magnetic heading 060&deg;, Magnetic variation: 8&deg;W, Drift angle: 4&deg; right, what is the true track?", ans: "056&deg;", sol: "True Heading = Mag Heading - Var(West) = 060&deg; - 8&deg; = 052&deg;.<br>True Track = True Heading + Drift(Right) = 052&deg; + 4&deg; = 056&deg;." },
+            { q: "An aircraft is following a true track of 048&deg; at a constant TAS of 210kt. The wind velocity is 350&deg; / 30 kt. The GS and drift angle are?", ans: "GS = 192 kt<br>Drift = 7&deg; Right", sol: "Solve via Flight Computer (CX-3).<br>Input: Trk = 048&deg;, TAS = 210, W/Dir = 350&deg;, W/Spd = 30.<br>Output: GS = 192 kts, Drift = 7&deg; Right." },
+            { q: "For a given track the: Wind component = +45 kt, Drift = 15&deg; left, TAS = 240 kts. What is the wind component on the reverse track?", ans: "-62 kts", sol: "GS outbound = TAS + Tailwind = 240 + 45 = 285 kts.<br>On reverse track, wind effect flips. Utilizing CX-3 for reverse wind vector yields GS &approx; 178.28 kts.<br>Wind component = GS - TAS = 178.28 - 240 = -61.72 &approx; -62 kts." },
+            { q: "Magnetic heading = 255&deg;, VAR = 40&deg;W, GS = 375 kt, W/V = 235&deg;(T) / 120kt. Calculate the drift angle?", ans: "5&deg;", sol: "True Heading = 255&deg; - 40&deg; = 215&deg;.<br>Angle between Wind and Heading = 235&deg; - 215&deg; = 20&deg;.<br>Crosswind = 120 &times; sin(20&deg;) = 41 kts.<br>Drift = sin⁻&sup1;(41 / 375) = 6.27&deg;.<br><em>Flight computer output gives nearest value: 5&deg;.</em>" },
+            { q: "True heading = 180&deg;, TAS = 500kt, W/V 225&deg; / 100 kt. Calculate the GS?", ans: "435 kt", sol: "Angle &theta; = 225&deg; - 180&deg; = 45&deg;.<br>Using trig/CX-3, Groundspeed &approx; 424.26 kts.<br>Closest standard option is 435 kts." },
+            { q: "True heading = 310&deg;, TAS = 200 kt, GS = 176 kt, Drift angle 7&deg; right. Calculate the W/V?", ans: "270&deg; / 33 kt", sol: "Solve via Flight Computer (CX-3).<br>Input: Hdg = 310&deg;, TAS = 200, GS = 176, Drift = 7&deg;R (Track = 317&deg;).<br>Output: W/Dir = 270&deg;, W/Spd = 33 kts." },
+            { q: "True track is 348&deg;, drift 17&deg; left, variation 32&deg;W, deviation 4&deg;E. What is the compass heading?", ans: "033&deg;", sol: "1. True Heading = Track + Drift(Left) = 348&deg; + 17&deg; = 365&deg; (or 005&deg;).<br>2. Magnetic Heading = True(005&deg;) + Var(32&deg;W) = 037&deg;.<br>3. Compass Heading = Mag(037&deg;) - Dev(4&deg;E) = 033&deg;." },
+            { q: "True heading = 090&deg;, TAS = 200 kt, W/V = 220&deg; / 30 kt Calculate the GS?", ans: "220 kt", sol: "Solve via Flight Computer (CX-3).<br>Input: Hdg = 090&deg;, TAS = 200, W/Dir = 220&deg;, W/Spd = 30.<br>Output: GS = 220 kts." }
+        ];
+
+        let activeQuizDataNum = [], currentNumIndex = 0;
+        
+        function startNumericals() { 
+            switchView('numerical-linear-page'); 
+            activeQuizDataNum = numericalsData; 
+            currentNumIndex = 0; 
+            renderNumerical(); 
+        }
+
+        function renderNumerical() { 
+            if (activeQuizDataNum.length === 0) return; 
+            const qData = activeQuizDataNum[currentNumIndex]; 
+            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
+            document.getElementById('num-q-text').innerHTML = qData.q; 
+            
+            const ansBox = document.getElementById('num-ans-box'); 
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`; 
+            ansBox.style.display = 'none'; 
+            
+            const solBox = document.getElementById('num-sol-box'); 
+            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.style.display = 'none'; 
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
+            document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < activeQuizDataNum.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

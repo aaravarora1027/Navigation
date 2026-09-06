@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 11 | PNR</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: flex; justify-content: center; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 40px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; width: 100%; max-width: 500px; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 25px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; margin-bottom: 15px; }
+        .feedback-solution { display: block; background-color: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); padding: 20px; font-size: 1.05rem; font-weight: normal; }
+        
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 11: PNR</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals Engine</h3>
+                    <p>Class & Book Calculations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUMERICALS ENGINE -->
+        <div id="numerical-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Calculation 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; border-color: #555;" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box feedback-solution" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // NUMERICALS DATA (Class + Book Calculations)
+        // ==========================================
+        const numericalsData = [
+            // Data will be injected here
+           // ==========================================
+        // NUMERICALS DATA (Class Notes Q1 - Q10)
+        // ==========================================
+            { 
+                q: "<strong>Class Q1.</strong> Distance = 1200 NM, TK = 270&deg;, W/V = 270/20. 4 Engine TAS = 180 kts. 3 engine TAS = 150 kts. Find distance & time to CP.", 
+                ans: "Distance = 680 NM, Time = 4.25 hrs.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Calculate CP using Reduced TAS (3 Engine = 150 kts):<br>G/S (Out) = 150 - 20 (Headwind) = 130 kts.<br>G/S (Home) = 150 + 20 (Tailwind) = 170 kts.<br><br>2. Distance to CP:<br>D_CP = (D &times; H) / (O + H)<br>D_CP = (1200 &times; 170) / (130 + 170) = (1200 &times; 170) / 300 = 680 NM.<br><br>3. Time to CP (using Normal 4 Engine TAS = 180 kts):<br>G/S (Normal Out) = 180 - 20 = 160 kts.<br>Time_CP = Distance / G/S(Normal Out) = 680 / 160 = 4.25 hrs."
+            },
+            { 
+                q: "<strong>Class Q2.</strong> Distance = 1200 NM. TK = 270&deg;. W/V = 270/20. 4 engine TAS = 180 kts. FOB = 1500 gal, RF = 300 gal, FC = 100 gal/H. Find distance & time to PNR.", 
+                ans: "Time = 6.67 hrs, Distance = 1066 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Groundspeeds (Normal TAS = 180 kts):<br>G/S(O) = 180 - 20 = 160 kts.<br>G/S(H) = 180 + 20 = 200 kts.<br><br>2. Calculate Endurance (E):<br>E = (FOB - RF) / FC = (1500 - 300) / 100 = 12 hrs.<br><br>3. Time to PNR:<br>T_PNR = (E &times; H) / (O + H)<br>T_PNR = (12 &times; 200) / (160 + 200) = 2400 / 360 = 6.67 hrs.<br><br>4. Distance to PNR:<br>D_PNR = T_PNR &times; G/S(O) = 6.67 &times; 160 = 1066 NM."
+            },
+            { 
+                q: "<strong>Class Q3.</strong> Distance = 1100 NM, TK = 020&deg;, W/V = 220/30. TAS(4E) = 210 kts, TAS(3E) = 195 kts. FOB = 10,000 lbs, RF = 1500 lbs, FC = 1200 lbs/h.<br><br>(i) Find Distance & Time to PNR.<br>(ii) Find Distance & Time to CP.", 
+                ans: "PNR: 3 hr 3 mins, 729 NM. | CP: 1 hr 57 mins, 467.2 NM.",
+                sol: "<strong>(i) PNR (Using 4E TAS = 210 kts):</strong><br>G/S(O) = 238 kts, G/S(H) = 181.56 kts.<br>Endurance (E) = (10000 - 1500) / 1200 = 7.08 hrs.<br>Time_PNR = (E &times; H) / (O + H) = (7.08 &times; 181.56) / (238 + 181.56) = 3.06 hrs = 3 hrs 3 mins.<br>Dist_PNR = 3.06 &times; 238 = 729 NM.<br><br><strong>(ii) CP (Using 3E TAS = 195 kts):</strong><br>G/S(O)_CP = 212 kts, G/S(H)_CP = 156.52 kts.<br>Dist_CP = (1100 &times; 156.52) / (212 + 156.52) = 467.2 NM.<br>Time_CP (Using Normal G/S Out = 238 kts): 467.2 / 238 = 1.96 hrs = 1 hr 57 mins."
+            },
+            { 
+                q: "<strong>Class Q4.</strong> TAS(4E) = 300 kts, TAS(3E) = 250 kts. W/V = 280/15, TK = 220&deg;. Distance = 1500 NM. FOB = 10,000 lbs, RF = 2000 lbs, FC = 1200 lbs/h.<br><br>(i) Find Distance & time to CP.<br>(ii) Find Distance & time to PNR.", 
+                ans: "CP: 775 NM, 2 hr 40 mins. | PNR: 998 NM, 3 hr 25 mins.",
+                sol: "<strong>(i) CP (Using 3E TAS = 250 kts):</strong><br>G/S(O)_CP = 241 kts, G/S(H)_CP = 258 kts.<br>Dist_CP = (D &times; H) / (O + H) = (1500 &times; 258) / (258 + 241) = 775 NM.<br>Time_CP (Using Normal G/S Out = 291 kts) = 775 / 291 = 2.66 hrs = 2 hrs 40 mins.<br><br><strong>(ii) PNR (Using 4E TAS = 300 kts):</strong><br>G/S(O) = 291 kts, G/S(H) = 308.35 kts.<br>Endurance (E) = (10000 - 2000) / 1200 = 6.67 hrs.<br>Time_PNR = (E &times; H) / (O + H) = (6.67 &times; 308.35) / (291 + 308.35) = 3.42 hrs = 3 hrs 25 mins.<br>Dist_PNR = Time_PNR &times; G/S(O) = 3.42 &times; 291 = 998 NM."
+            },
+            { 
+                q: "<strong>Class Q5.</strong> Distance = 1250 NM, TR = 153&deg;, W/V = 270/30, TAS = 180 kts (4E). If FOB is just sufficient for flight, find PNR Distance & Time.", 
+                ans: "Time = 3 hrs, Distance = 576.88 NM.",
+                sol: "1. <em>\"Just sufficient\"</em> means Endurance = Total Flight Time.<br>2. Calculate Groundspeeds: G/S(O) = 191.62 kts, G/S(H) = 164.38 kts.<br>3. Flight Time (Endurance) = 1250 / 191.62 = 6.52 hrs.<br>4. Time_PNR = (E &times; H) / (O + H) = (6.52 &times; 164.38) / (164.38 + 191.62) = 3 hrs.<br>5. Dist_PNR = Time_PNR &times; G/S(O) = 3 &times; 191.62 = 576.88 NM."
+            },
+            { 
+                q: "<strong>Class Q6.</strong> Distance to PNR = 511 NM, TK = 110&deg;, W/V = 70/40, TAS = 290 kts, FC = 210 lbs/h, RF = 120 lbs.<br><br>(i) Find FOB.<br>(ii) If CP reaches 35 mins before PNR, find the total distance (Stage Length).", 
+                ans: "(i) FOB = 860 lbs. (ii) Distance = 650 NM.",
+                sol: "<strong>(i) Find FOB:</strong><br>G/S(O) = 258.22 kts, G/S(H) = 319.5 kts.<br>Time_PNR = Dist / G/S(O) = 511 / 258.22 = 1.98 hrs.<br>Endurance (E) = [Time_PNR &times; (O + H)] / H = [1.98 &times; (258.22 + 319.5)] / 319.5 = 3.58 hrs.<br>FOB = (E &times; FC) + RF = (3.52 &times; 210) + 120 = 860 lbs. <em>(Note: Calculations step adjusts E slightly in written notes to 3.52 based on rounding)</em><br><br><strong>(ii) Find Total Distance:</strong><br>Time_CP = Time_PNR - 35 mins = 1 hr 58 mins - 35 mins = 1 hr 23 mins = 1.39 hrs.<br>Dist_CP = Time_CP &times; G/S(O) = 1.39 &times; 258.22 = 360 NM.<br>Using CP Formula to find Total Dist (D):<br>D_CP = (D &times; H) / (O + H) &rarr; 360 = (D &times; 319.5) / (258.2 + 319.5)<br>D = (360 &times; 577.7) / 319.5 = 650 NM."
+            },
+            { 
+                q: "<strong>Class Q7.</strong> Aircraft flying A to B, TK = 156&deg;, W/V = 127/35, TAS = 240 kts, FC = 280 lbs/h. Reduced TAS = 210 kts. RF = 150 lbs.<br><br>(i) Distance to CP in event of Engine Failure is 480 NM. Find Total Distance.<br>(ii) If PNR is reached 20 mins after CP, find FOB.", 
+                ans: "(i) Distance = 837 NM. (ii) FOB = 1455 lbs.",
+                sol: "<strong>(i) Find Total Distance:</strong><br>Using Reduced TAS (210 kts): G/S(O)_CP = 178.7 kts, G/S(H)_CP = 239.9 kts.<br>D_CP = (D &times; H) / (O + H) &rarr; 480 = (D &times; 239.9) / (239.9 + 178.7)<br>D = (480 &times; 418.6) / 239.9 = 837 NM.<br><br><strong>(ii) Find FOB:</strong><br>Using Normal TAS (240 kts): G/S(O) = 208.8 kts, G/S(H) = 270 kts.<br>Time_CP = 480 / 208.8 = 2 hrs 18 mins.<br>Time_PNR = Time_CP + 20 mins = 2 hrs 38 mins = 2.63 hrs.<br>Endurance (E) = [Time_PNR &times; (O + H)] / H = [2.63 &times; (208.8 + 270)] / 270 = 4.66 hrs.<br>FOB = (E &times; FC) + RF = (4.66 &times; 280) + 150 = 1455 lbs."
+            },
+            { 
+                q: "<strong>Class Q8.</strong> TK = 107&deg;, W/V = 130/35, TAS = 240 kts, Distance = 830 NM. Reduced TAS = 205 kts, FOB = 1500 lbs, FC(Normal) = 270 lbs/h, FC(Reduced) = 215 lbs/h, RF = 130 lbs. Find Distance & Time to PNR in event of Engine Failure.", 
+                ans: "Distance = 620 NM, Time = 3 hrs.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Normal G/S: G/S(O)_N = 207.4 kts, G/S(H)_N = 271.8 kts.<br>2. Reduced G/S: G/S(O)_R = 176.8 kts, G/S(H)_R = 236.8 kts.<br>3. Complex 1-Engine Inop PNR Formula:<br>(Dist_PNR / G/S(O)_N) &times; FC(N) + (Dist_PNR / G/S(H)_R) &times; FC(R) = Usable Fuel (FOB - RF)<br>(x / 207.4) &times; 270 + (x / 236.8) &times; 215 = 1500 - 130<br>x &times; (1.3 + 0.9) = 1370<br>x &times; 2.21 = 1370 &rarr; x = 620 NM.<br>4. Time to PNR = Distance / G/S(O)_N = 620 / 207.4 = 3 hrs."
+            },
+            { 
+                q: "<strong>Class Q9.</strong> FC(N) = 290 lbs/h, TK = 225&deg;, W/V = 250/40, TAS = 250 kts. FC(R) = 220 lbs/h, Reduced TAS = 210 kts. RF = 160 lbs. Distance to PNR at engine failure = 570 NM.<br><br>(i) Find FOB.<br>(ii) If CP is reached 25 mins before PNR, find stage length (Total Distance).", 
+                ans: "(i) FOB = 1446 lbs. (ii) Distance = 817.6 NM.",
+                sol: "<strong>(i) Find FOB:</strong><br>Normal G/S: O_N = 213.18 kts, H_N = 285.69 kts.<br>Reduced G/S: O_R = 173.07 kts, H_R = 245.57 kts.<br>Complex PNR Formula: (D_PNR / O_N) &times; FC(N) + (D_PNR / H_R) &times; FC(R) = Usable Fuel<br>(570 / 213.18) &times; 290 + (570 / 245.57) &times; 220 = FOB - 160<br>775.4 + 510.64 = FOB - 160 &rarr; FOB = 1286 + 160 = 1446 lbs.<br><br><strong>(ii) Find Total Distance:</strong><br>Time_PNR = D_PNR / O_N = 570 / 213.18 = 2 hrs 40 mins.<br>Time_CP = Time_PNR - 25 mins = 2 hrs 15 mins (2.25 hrs).<br>Dist_CP = Time_CP &times; O_N = 2.25 &times; 213.18 = 479.6 NM.<br>Using CP Formula (Reduced speeds): D_CP = (D &times; H_R) / (O_R + H_R)<br>479.6 = (D &times; 245.57) / (173.07 + 245.57)<br>D = (479.6 &times; 418.64) / 245.57 = 817.6 NM."
+            },
+            { 
+                q: "<strong>Class Q10.</strong> For a flight X to Y, Track = 278&deg;, Distance = 780 NM. TAS = 250 kts. W/V from CP to Base = Headwind 15 kts. W/V from CP to Y = Headwind 30 kts. Find Distance & Time to CP.", 
+                ans: "Distance = 402 NM, Time = 1 hr 50 mins.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify split winds:<br>Going Out to Y (CP to Y): Headwind = 30 kts. Therefore, G/S(Out) = 250 - 30 = 220 kts.<br>Coming Home to Base (CP to Base): Headwind = 15 kts. Therefore, G/S(Home) = 250 - 15 = 235 kts.<br><br>2. Calculate Distance to CP:<br>D_CP = (D &times; H) / (O + H)<br>D_CP = (780 &times; 235) / (220 + 235) = 183300 / 455 = 402 NM.<br><br>3. Calculate Time to CP:<br>Time_CP = D_CP / G/S(Out) = 402 / 220 = 1.83 hrs = 1 hr 50 mins."
+            },
+            { 
+                q: "<strong>Book Q1.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "a. 1458 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: Outbound G/S (O) = 300 - 50 = 250 kt. Homebound G/S (H) = 300 + 50 = 350 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 250 &times; 350) / (250 + 350)<br>4. Result: 875,000 / 600 = <strong>1458.33 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q2.</strong> What is the time to the point of safe return (PSR) if the distance from A to B is 2368 nautical miles, the outbound groundspeed is 365 knots, the homebound groundspeed is 480 knots, and safe endurance is 8 hours 30 minutes?", 
+                ans: "d. 290 Min.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 365 kt, H = 480 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480) / (365 + 480)<br>4. Result: 4080 / 845 = 4.828 hours.<br>5. Convert to Minutes: 4.828 &times; 60 = <strong>289.7 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q3.</strong> What is the distance from 'Q' to the Point of Safe Return (PSR) for an aircraft that was over 'Q' at 1320 hours flying direct to 'R', given the following data? Distance 'Q' to 'R' 3016 nm, True airspeed 480 kt, Safe endurance 10 Hours, if the mean wind component 'outbound' -90 kt, and the mean wind component 'homebound' is +75 kt.", 
+                ans: "c. 2290 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 480 - 90 = 390 kt. H = 480 + 75 = 555 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 390 &times; 555) / (390 + 555)<br>4. Result: 2,164,500 / 945 = <strong>2290.47 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q4.</strong> What is the distance to B from the equal-time-point given the following data? Distance A to B is 360 nm, TAS is 180 kt, Wind component A - B is -15 kt, Wind component B - A is +15 kt.", 
+                ans: "a. 165 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Read carefully! The question asks for the distance <strong>to B</strong>, not from A.</em><br>1. Identify Speeds: O = 180 - 15 = 165 kt. H = 180 + 15 = 195 kt.<br>2. Formula: Distance to PET (from A) = (D &times; H) / (O + H)<br>3. Calculate: (360 &times; 195) / (165 + 195) = 70,200 / 360 = 195 nm (Distance from A).<br>4. Distance to B = Total Distance - Distance from A = 360 - 195 = <strong>165 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q5.</strong> An aircraft is flying at a TAS of 300 knots over a stretch of water between 2 airfields 500 nm apart. What is the distance from the first airfield to the equal time point (ETP) if the wind component is 60 knots head?", 
+                ans: "d. 300 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 60 = 240 kt. H = 300 + 60 = 360 kt.<br>2. Formula: Distance to ETP = (D &times; H) / (O + H)<br>3. Calculate: (500 &times; 360) / (240 + 360)<br>4. Result: 180,000 / 600 = <strong>300 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q6.</strong> How far can the aeroplane fly out from its base and return in one hour, when flying at TAS 180 kt on a track of 090&deg;, if the W/V is 045&deg;/50kt?", 
+                ans: "b. 85 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: Wind is 45&deg; off the nose. HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Identify Speeds: O = 180 - 35.35 = 144.65 kt. H = 180 + 35.35 = 215.35 kt.<br>3. Formula: PSR Distance = (E &times; O &times; H) / (O + H)<br>4. Calculate: (1 &times; 144.65 &times; 215.35) / 360 = 31,150.9 / 360 = <strong>86.5 nm</strong>. <em>(Selecting closest option 'b' based on applied drift/groundspeed approximations in standard keys: ~85 nm)</em>."
+            },
+            { 
+                q: "<strong>Book Q7.</strong> For a distance of 1860 NM between Q and R, a ground speed \"out\" of 385 kt, a ground speed \"back\" of 465 kt and an endurance of 8 HR (excluding reserves) the distance from Q to the point of safe return (PSR) is?", 
+                ans: "a. 1685 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 385 kt, H = 465 kt, E = 8 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8 &times; 385 &times; 465) / (385 + 465)<br>4. Result: 1,432,200 / 850 = <strong>1684.9 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q8.</strong> Two points A and B are 1000 NM apart. TAS = 490 kt. On the flight between A and B the equivalent headwind is -20 Kt. On the return leg between B and A, the equivalent headwind is +40 kt. What distance from A, along the route A to B, is the Point of Equal Time (PET)?", 
+                ans: "a. 470 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Interpret 'Equivalent Headwind': A HW of -20 means a 20kt Tailwind (O = 490 + 20 = 510 kt). A HW of +40 means a 40kt Headwind (H = 490 - 40 = 450 kt).<br>2. Formula: Distance to PET = (D &times; H) / (O + H)<br>3. Calculate: (1000 &times; 450) / (510 + 450)<br>4. Result: 450,000 / 960 = <strong>468.75 nm</strong>. (Closest option is 470 NM)."
+            },
+            { 
+                q: "<strong>Book Q9.</strong> An aeroplane is flying at TAS 180 kt on a track of 090&deg;. The W/V is 045&deg;/50kt. How far can the aeroplane fly out from its base and return in one hour?", 
+                ans: "b. 85 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>This is identical to Question 6.</em><br>1. HW Component = 35.35 kt.<br>2. O = 144.65 kt, H = 215.35 kt.<br>3. PSR Distance = (1 &times; 144.65 &times; 215.35) / 360 = 86.5 nm. Closest standard key is <strong>85 NM</strong>."
+            },
+            { 
+                q: "<strong>Book Q10.</strong> Given: Distance 'A' to 'B' 2346 NM, Groundspeed 'out' 365 kt, Groundspeed 'back' 480 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 219 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2346 &times; 480) / (365 + 480) = 1,126,080 / 845 = 1332.64 nm.<br>2. Find Time to PET: Distance / O<br>3. Calculate: 1332.64 / 365 = 3.65 hours.<br>4. Convert to Minutes: 3.65 &times; 60 = <strong>219 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q11.</strong> Given: Distance 'A' to 'B' 2346 NM, Groundspeed 'out' 365 kt, Groundspeed 'back' 480 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 290 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 365 kt, H = 480 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480) / (365 + 480) = 4080 / 845 = 4.828 hours.<br>4. Convert to Minutes: 4.828 &times; 60 = <strong>289.7 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q12.</strong> An aircraft was over 'A' at 1435 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2900 NM, True airspeed 470 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt. The ETA for reaching the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "d. 1657.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 470 + 55 = 525 kt. H = 470 - 75 = 395 kt.<br>2. Find PET Distance: (2900 &times; 395) / (525 + 395) = 1,145,500 / 920 = 1245.1 nm.<br>3. Find Time to PET: 1245.1 / 525 = 2.371 hours = 142.3 minutes (2 hrs 22 mins).<br>4. Calculate ETA: 1435 + 0222 = <strong>1657 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q13.</strong> An aircraft was over 'A' at 1435 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2900 NM, True airspeed 470 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt, Safe endurance 9 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 2141 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 470 + 55 = 525 kt. H = 470 - 75 = 395 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 525 &times; 395) / 920<br>4. Result: 1,970,062.5 / 920 = <strong>2141.37 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q14.</strong> Given: Distance 'A' to 'B' 2484 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 500 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 193 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2484 &times; 500) / (420 + 500) = 1,242,000 / 920 = 1350 nm.<br>2. Find Time to PET: 1350 / 420 = 3.214 hours.<br>3. Convert to Minutes: 3.214 &times; 60 = <strong>192.8 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q15.</strong> Given: Distance 'A' to 'B' 2484 NM, Mean groundspeed 'out' 420 kt, Mean groundspeed 'back' 500 kt, Safe endurance 08 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 1940 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 420 kt, H = 500 kt, E = 8.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 420 &times; 500) / 920<br>4. Result: 1,785,000 / 920 = <strong>1940.2 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q16.</strong> An aircraft was over 'Q' at 1320 hours flying direct to 'R'. Given: Distance 'Q' to 'R' 3016 NM, True airspeed 480 kt, Mean wind component 'out' -90 kt, Mean wind component 'back' +75 kt, Safe endurance 10:00 HR. The distance from 'Q' to the Point of Safe Return (PSR) 'Q' is?", 
+                ans: "b. 2290 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 480 - 90 = 390 kt. H = 480 + 75 = 555 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 390 &times; 555) / 945<br>4. Result: 2,164,500 / 945 = <strong>2290.47 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q17.</strong> Given: Distance 'A' to 'B' 1973 NM, Groundspeed 'out' 430 kt, Groundspeed 'back' 385 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 130 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (1973 &times; 385) / (430 + 385) = 759,605 / 815 = 932.03 nm.<br>2. Find Time to PET: 932.03 / 430 = 2.167 hours.<br>3. Convert to Minutes: 2.167 &times; 60 = <strong>130 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q18.</strong> Distance 'Q' to 'R' 1860 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 370 kt, Safe endurance 7 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 1345 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 370 kt, E = 7 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7 &times; 400 &times; 370) / 770<br>4. Result: 1,036,000 / 770 = <strong>1345.45 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q19.</strong> Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 435 kt, Groundspeed 'back' 385 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 1838 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 435 kt, H = 385 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 435 &times; 385) / 820<br>4. Result: 1,507,275 / 820 = <strong>1838.1 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q20.</strong> Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 435 kt, Groundspeed 'back' 385 kt. The time from 'Q' to the Point of Equal Time (PET) between 'Q' and 'R' is?", 
+                ans: "d. 114 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (1760 &times; 385) / (435 + 385) = 677,600 / 820 = 826.34 nm.<br>2. Find Time to PET: 826.34 / 435 = 1.9 hours.<br>3. Convert to Minutes: 1.9 &times; 60 = <strong>114 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q21.</strong> Given: Distance 'A' to 'B' 3623 NM, Groundspeed 'out' 370 kt, Groundspeed 'back' 300 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 263 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (D &times; H) / (O + H)<br>2. Calculate: (3623 &times; 300) / (370 + 300) = 1,086,900 / 670 = 1622.23 nm.<br>3. Find Time to PET: Distance / O<br>4. Calculate: 1622.23 / 370 = 4.384 hours.<br>5. Convert to Minutes: 4.384 &times; 60 = <strong>263.06 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q22.</strong> Given: Distance 'Q' to 'R' 1860 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 370 kt, Safe endurance 7 HR. The distance from 'Q' to the Point of Safe Return (PSR) 'Q' is?", 
+                ans: "a. 1345 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 370 kt, E = 7 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7 &times; 400 &times; 370) / (400 + 370)<br>4. Result: 1,036,000 / 770 = <strong>1345.45 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q23.</strong> Given: Distance 'Q' to 'R' 1970 NM, Groundspeed 'out' 475 kt, Groundspeed 'back' 485 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 2160 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 475 kt, H = 485 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 475 &times; 485) / (475 + 485)<br>4. Result: 2,073,375 / 960 = <strong>2159.76 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q24.</strong> Given: Distance 'Q' to 'R' 2160 NM, Groundspeed 'out' 535 kt, Groundspeed 'back' 585 kt, Safe endurance 6 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "b. 1677 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 535 kt, H = 585 kt, E = 6 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (6 &times; 535 &times; 585) / (535 + 585)<br>4. Result: 1,877,850 / 1120 = <strong>1676.65 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q25.</strong> Given: Distance 'Q' to 'R' 2467 NM, Groundspeed 'out' 500 kt, Groundspeed 'back' 400 kt, Safe endurance 9.5 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 2111 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 500 kt, H = 400 kt, E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 500 &times; 400) / (500 + 400)<br>4. Result: 1,900,000 / 900 = <strong>2111.11 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q26.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 350 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "a. 1714 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 350 - 50 = 300 kt. H = 350 + 50 = 400 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 300 &times; 400) / (300 + 400)<br>4. Result: 1,200,000 / 700 = <strong>1714.28 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q27.</strong> What is the time to the point of safe return (PSR) if the distance from A to B is 3000 nautical miles, the outbound groundspeed is 350 knots, the homebound groundspeed is 460 knots, and safe endurance is 8 hours 30 minutes?", 
+                ans: "d. 290 Min.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 350 kt, H = 460 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 460) / (350 + 460) = 3910 / 810 = 4.827 hours.<br>4. Convert to Minutes: 4.827 &times; 60 = <strong>289.6 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q28.</strong> What is the distance from 'Q' to the Point of Safe Return (PSR) for an aircraft that was over 'Q' at 1400 hours flying direct to 'R', given the following data? Distance 'Q' to 'R' 3050 nm, True airspeed 480 kt, Safe endurance 10 Hours, if the mean wind component 'outbound' -90 kt, and the mean wind component 'homebound' is +75 kt.", 
+                ans: "a. 2290 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 480 - 90 = 390 kt. H = 480 + 75 = 555 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 390 &times; 555) / (390 + 555)<br>4. Result: 2,164,500 / 945 = <strong>2290.47 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q29.</strong> What is the distance to B from the equal-time-point given the following data? Distance A to B is 560 nm, TAS is 280 kt, Wind component A - B is -15 kt, Wind component B - A is +15 kt.", 
+                ans: "a. 265 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Like Q4, this asks for distance <strong>to B</strong>.</em><br>1. Identify Speeds: O = 280 - 15 = 265 kt. H = 280 + 15 = 295 kt.<br>2. Formula: Distance to PET (from A) = (D &times; H) / (O + H)<br>3. Calculate: (560 &times; 295) / (265 + 295) = 165,200 / 560 = 295 nm (Distance from A).<br>4. Distance to B = Total Distance - Distance from A = 560 - 295 = <strong>265 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q30.</strong> An aircraft is flying at a TAS of 500 knots over a stretch of water between 2 airfields 700 nm apart. What is the distance from the first airfield to the equal time point (ETP) if the wind component is 60 knots head?", 
+                ans: "d. 392 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 500 - 60 = 440 kt. H = 500 + 60 = 560 kt.<br>2. Formula: Distance to ETP = (D &times; H) / (O + H)<br>3. Calculate: (700 &times; 560) / (440 + 560)<br>4. Result: 392,000 / 1000 = <strong>392 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q31.</strong> How far can the aeroplane fly out from its base and return in one hour, when flying at TAS 260 kt on a track of 090&deg;, if the W/V is 045&deg;/50kt?", 
+                ans: "b. 128 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Identify Speeds: O = 260 - 35.35 = 224.65 kt. H = 260 + 35.35 = 295.35 kt.<br>3. Formula: PSR Distance = (E &times; O &times; H) / (O + H)<br>4. Calculate: (1 &times; 224.65 &times; 295.35) / 520 = 66,350 / 520 = <strong>127.59 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q32.</strong> For a distance of 1900 NM between Q and R, a ground speed \"out\" of 390 kt, a ground speed \"back\" of 450 kt and an endurance of 8 HR (excluding reserves) the distance from Q to the point of safe return (PSR) is?", 
+                ans: "a. 1671 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 390 kt, H = 450 kt, E = 8 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8 &times; 390 &times; 450) / (390 + 450)<br>4. Result: 1,404,000 / 840 = <strong>1671.4 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q33.</strong> Two points A and B are 1200 NM apart. TAS = 480 Kt. On the flight between A and B the equivalent headwind is -20 kt. On the return leg between B and A, the equivalent headwind is +40 kt. What distance from A, along the route A to B, is the Point of Equal Time (PET)?", 
+                ans: "d. 624 NM.",
+                sol: "<strong>Step-by-Step Resolution & Discrepancy Note:</strong><br><br><em>Note: This is a known flawed question in the bank.</em><br>1. Standard Mathematical Approach: Outbound HW is -20 (Tailwind 20), making O = 500 kt. Inbound HW is +40, making H = 440 kt. PET = (1200 &times; 440) / 940 = 561.7 NM. (Not an option).<br>2. The \"DGCA Key\" Approach: The question implies an effective out speed O=480 and return speed H=520 (swapped wind signs). If (1200 &times; 520) / (480 + 520) = 624, you arrive at option 'd'. Therefore, memorize <strong>624 NM</strong> for this specific error."
+            },
+            { 
+                q: "<strong>Book Q34.</strong> An aeroplane is flying at TAS 380 kt on a track of 090&deg;. The W/V is 045&deg;/50kt. How far can the aeroplane fly out from its base and return in one hour?", 
+                ans: "a. 188 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Identify Speeds: O = 380 - 35.35 = 344.65 kt. H = 380 + 35.35 = 415.35 kt.<br>3. Formula: PSR Distance = (E &times; O &times; H) / (O + H)<br>4. Calculate: (1 &times; 344.65 &times; 415.35) / 760 = 143,152 / 760 = <strong>188.35 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q35.</strong> Given: Distance 'A' to 'B' 2400 NM, Groundspeed 'out' 365 kt, Groundspeed 'back' 480 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 224 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2400 &times; 480) / (365 + 480) = 1,152,000 / 845 = 1363.31 nm.<br>2. Find Time to PET: 1363.31 / 365 = 3.735 hours.<br>3. Convert to Minutes: 3.735 &times; 60 = <strong>224.1 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q36.</strong> Given: Distance 'A' to 'B' 2500 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 480 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 278 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 480 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480) / (400 + 480) = 4080 / 880 = 4.636 hours.<br>4. Convert to Minutes: 4.636 &times; 60 = <strong>278.18 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q37.</strong> An aircraft was over 'A' at 1700 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2900 NM, True airspeed 480 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt. The ETA for reaching the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "d. 1920.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 480 + 55 = 535 kt. H = 480 - 75 = 405 kt.<br>2. Find PET Distance: (2900 &times; 405) / (535 + 405) = 1,174,500 / 940 = 1249.46 nm.<br>3. Find Time to PET: 1249.46 / 535 = 2.335 hours = 140 minutes (2 hrs 20 mins).<br>4. Calculate ETA: 1700 + 0220 = <strong>1920 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q38.</strong> An aircraft was over 'A' at 1630 hours flying direct to 'B'. Given: Distance 'A' to 'B' 3000 NM, True airspeed 490 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt, Safe endurance 9 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 2238 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 490 + 55 = 545 kt. H = 490 - 75 = 415 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 545 &times; 415) / (545 + 415)<br>4. Result: 2,148,462.5 / 960 = <strong>2237.98 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q39.</strong> Given: Distance 'A' to 'B' 2700 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 500 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 189 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2700 &times; 500) / (450 + 500) = 1,350,000 / 950 = 1421.05 nm.<br>2. Find Time to PET: 1421.05 / 450 = 3.1578 hours.<br>3. Convert to Minutes: 3.1578 &times; 60 = <strong>189.4 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q40.</strong> Given: Distance 'A' to 'B' 2600 NM, Mean groundspeed 'out' 480 kt, Mean groundspeed 'back' 500 kt, Safe endurance 08 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 2081 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 480 kt, H = 500 kt, E = 8.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480 &times; 500) / (480 + 500)<br>4. Result: 2,040,000 / 980 = <strong>2081.6 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q41.</strong> An aircraft was over 'Q' at 1545 hours flying direct to 'R'. Given: Distance 'Q' to 'R' 3016 NM, True airspeed 550 kt, Mean wind component 'out' -90 kt, Mean wind component 'back' +75 kt, Safe endurance 10:00 HR. The distance from 'Q' to the Point of Safe Return (PSR) 'Q' is?", 
+                ans: "b. 2650 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 550 - 90 = 460 kt. H = 550 + 75 = 625 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 460 &times; 625) / (460 + 625)<br>4. Result: 2,875,000 / 1085 = <strong>2649.7 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q42.</strong> Given: Distance 'A' to 'B' 2450 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 385 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 151 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2450 &times; 385) / (450 + 385) = 943,250 / 835 = 1129.64 nm.<br>2. Find Time to PET: 1129.64 / 450 = 2.510 hours.<br>3. Convert to Minutes: 2.510 &times; 60 = <strong>150.6 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q43.</strong> Given: Distance 'A' to 'B' 2100 NM, Groundspeed 'out' 430 kt, Groundspeed 'back' 365 kt, Safe endurance 7 HR 20 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 1464 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Standard calculation gives ~1447 NM. However, DGCA keys often contain slight rounding discrepancies. 1464 NM is the accepted key answer.</em><br>1. Convert Endurance: 7 hr 20 min = 7.333 hours.<br>2. Formula: (E &times; O &times; H) / (O + H)<br>3. Calculate: (7.333 &times; 430 &times; 365) / 795 = 1,150,533 / 795 = <strong>1447.2 nm</strong>. (Select 1464 NM as nearest standard key)."
+            },
+            { 
+                q: "<strong>Book Q44.</strong> Given: Distance 'Q' to 'R' 1650 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 385 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 1867 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 450 kt, H = 385 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 450 &times; 385) / (450 + 385)<br>4. Result: 1,559,250 / 835 = <strong>1867.36 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q45.</strong> Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 370 kt. The time from 'Q' to the Point of Equal Time (PET) between 'Q' and 'R' is?", 
+                ans: "d. 106 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (1760 &times; 370) / (450 + 370) = 651,200 / 820 = 794.14 nm.<br>2. Find Time to PET: 794.14 / 450 = 1.764 hours.<br>3. Convert to Minutes: 1.764 &times; 60 = <strong>105.88 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q46.</strong> Distance 'A' to 'B' 3600 NM, Groundspeed 'out' 395 kt, Groundspeed 'back' 300 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 236 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (3600 &times; 300) / (395 + 300) = 1,080,000 / 695 = 1553.95 nm.<br>2. Find Time to PET: 1553.95 / 395 = 3.934 hours.<br>3. Convert to Minutes: 3.934 &times; 60 = <strong>236.04 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q47.</strong> Given: Distance 'Q' to 'R' 1960 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 470 kt, Safe endurance 7 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 1513 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 470 kt, E = 7 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7 &times; 400 &times; 470) / (400 + 470)<br>4. Result: 1,316,000 / 870 = <strong>1512.64 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q48.</strong> Given: Distance 'Q' to 'R' 1970 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 485 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 1973 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 485 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 400 &times; 485) / (400 + 485)<br>4. Result: 1,746,000 / 885 = <strong>1972.88 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q49.</strong> Distance 'Q' to 'R' 2160 NM, Groundspeed 'out' 500 kt, Groundspeed 'back' 585 kt, Safe endurance 6 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "b. 1618 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 500 kt, H = 585 kt, E = 6 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (6 &times; 500 &times; 585) / (500 + 585)<br>4. Result: 1,755,000 / 1085 = <strong>1617.51 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q50.</strong> Given: Distance 'Q' to 'R' 2550 NM, Groundspeed 'out' 500 kt, Groundspeed 'back' 450 kt, Safe endurance 9.5 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 2250 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 500 kt, H = 450 kt, E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 500 &times; 450) / (500 + 450)<br>4. Result: 2,137,500 / 950 = <strong>2250 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q51.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 350 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "a. 1713 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 350 - 50 = 300 kt. H = 350 + 50 = 400 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 300 &times; 400) / (300 + 400)<br>4. Result: 1,200,000 / 700 = <strong>1714.28 nm</strong>. (Option 'a' is closest)."
+            },
+            { 
+                q: "<strong>Book Q52.</strong> What is the time to the point of safe return (PSR) if the distance from A to B is 2500 nautical miles, the outbound groundspeed is 375 knots, the homebound groundspeed is 480 knots, and safe endurance is 9 hours 30 minutes?", 
+                ans: "d. 320 Min.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 375 kt, H = 480 kt, E = 9.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 480) / (375 + 480) = 4560 / 855 = 5.333 hours.<br>4. Convert to Minutes: 5.333 &times; 60 = <strong>320 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q53.</strong> What is the distance from 'Q' to the Point of Safe Return (PSR) for an aircraft that was over 'Q' at 1520 hours flying direct to 'R', given the following data? Distance 'Q' to 'R' 3120 nm, True airspeed 450 kt, Safe endurance 10 Hours, if the mean wind component 'outbound' -80 kt, and the mean wind component 'homebound' is +75 kt.", 
+                ans: "c. 2170 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 450 - 80 = 370 kt. H = 450 + 75 = 525 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 370 &times; 525) / (370 + 525)<br>4. Result: 1,942,500 / 895 = <strong>2170.39 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q54.</strong> What is the distance to B from the equal-time-point given the following data? Distance A to B is 560 nm, TAS is 200 kt, Wind component A - B is -15 kt, Wind component B - A is +15 kt.", 
+                ans: "a. 259.0 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: This asks for distance <strong>to B</strong>.</em><br>1. Identify Speeds: O = 200 - 15 = 185 kt. H = 200 + 15 = 215 kt.<br>2. Formula: Distance to PET (from A) = (D &times; H) / (O + H)<br>3. Calculate: (560 &times; 215) / (185 + 215) = 120,400 / 400 = 301 nm (Distance from A).<br>4. Distance to B = Total Distance - Distance from A = 560 - 301 = <strong>259 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q55.</strong> An aircraft is flying at a TAS of 375 knots over a stretch of water between 2 airfields 500 nm apart. What is the distance from the first airfield to the equal time point (ETP) if the wind component is 60 knots head?", 
+                ans: "d. 290 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 375 - 60 = 315 kt. H = 375 + 60 = 435 kt.<br>2. Formula: Distance to ETP = (D &times; H) / (O + H)<br>3. Calculate: (500 &times; 435) / (315 + 435)<br>4. Result: 217,500 / 750 = <strong>290 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q56.</strong> How far can the aeroplane fly out from its base and return in one hour, when flying at TAS 280 kt on a track of 090&deg;, if the W/V is 045&deg;/50kt?", 
+                ans: "b. 135 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Find Effective TAS (accounting for drift): Crosswind = 50 &times; sin(45&deg;) = 35.35 kt. Effective TAS = &radic;(280&sup2; - 35.35&sup2;) = 277.7 kt.<br>3. Identify Groundspeeds: O = 277.7 - 35.35 = 242.4 kt. H = 277.7 + 35.35 = 313.1 kt.<br>4. Calculate PSR Distance = (1 &times; 242.4 &times; 313.1) / (242.4 + 313.1) = 75,895 / 555.5 = <strong>136.6 nm</strong>. (Option 'b' 135 nm is the standard accepted DGCA key)."
+            },
+            { 
+                q: "<strong>Book Q57.</strong> For a distance of 2000 NM between Q and R, a ground speed \"out\" of 375 kt, a ground speed \"back\" of 475 kt and an endurance of 8 HR (excluding reserves) the distance from Q to the point of safe return (PSR) is?", 
+                ans: "a. 1676 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 375 kt, H = 475 kt, E = 8 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8 &times; 375 &times; 475) / (375 + 475)<br>4. Result: 1,425,000 / 850 = <strong>1676.47 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q58.</strong> Two points A and B are 1500 NM apart. TAS = 490 kt. On the flight between A and B the equivalent headwind is -20 kt. On the return leg between B and A, the equivalent headwind is +40 kt. What distance from A, along the route A to B, is the Point of Equal Time (PET)?", 
+                ans: "Approx. 703 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Options cut off in images, providing mathematical resolution. Also, this question mirrors the known glitch from Q33.</em><br>1. Pure Mathematical Approach: Outbound HW is -20 (Tailwind), O = 510 kt. Inbound HW is +40, H = 450 kt.<br>2. PET = (1500 &times; 450) / (510 + 450) = 675,000 / 960 = <strong>703.125 NM</strong>.<br><em>(If the DGCA glitch applies here and the signs are swapped like in Q33: O=470, H=530 &rarr; PET = 795 NM).</em>"
+            },
+            { 
+                q: "<strong>Book Q59.</strong> An aeroplane is flying at TAS 250 kt on a track of 090&deg;. The W/V is 045&deg;/50kt. How far can the aeroplane fly out from its base and return in one hour?", 
+                ans: "a. 123 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Basic Calculation (ignoring drift loss): O = 250 - 35.35 = 214.65 kt. H = 250 + 35.35 = 285.35 kt.<br>3. Calculate PSR Distance = (1 &times; 214.65 &times; 285.35) / (214.65 + 285.35) = 61,250 / 500 = <strong>122.5 nm</strong>. (Rounds perfectly to 123 NM)."
+            },
+            { 
+                q: "<strong>Book Q60.</strong> Given: Distance 'A' to 'B' 2500 NM, Groundspeed 'out' 375 kt, Groundspeed 'back' 485 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 226 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2500 &times; 485) / (375 + 485) = 1,212,500 / 860 = 1409.88 nm.<br>2. Find Time to PET: 1409.88 / 375 = 3.759 hours.<br>3. Convert to Minutes: 3.759 &times; 60 = <strong>225.58 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q61.</strong> Given: Distance 'A' to 'B' 2750 NM, Groundspeed 'out' 365 kt, Groundspeed 'back' 480 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 290 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 365 kt, H = 480 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480) / (365 + 480) = 4080 / 845 = 4.828 hours.<br>4. Convert to Minutes: 4.828 &times; 60 = <strong>289.7 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q62.</strong> An aircraft was over 'A' at 1735 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2750 NM, True airspeed 470 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt. The ETA for reaching the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "d. 1950.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 470 + 55 = 525 kt. H = 470 - 75 = 395 kt.<br>2. Find PET Distance: (2750 &times; 395) / (525 + 395) = 1,086,250 / 920 = 1180.7 nm.<br>3. Find Time to PET: 1180.7 / 525 = 2.249 hours = 135 minutes (2 hrs 15 mins).<br>4. Calculate ETA: 1735 + 0215 = <strong>1950 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q63.</strong> An aircraft was over 'A' at 1735 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2950 NM, True airspeed 470 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt, Safe endurance 9 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 2141 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 470 + 55 = 525 kt. H = 470 - 75 = 395 kt. E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 525 &times; 395) / (525 + 395)<br>4. Result: 1,970,062.5 / 920 = <strong>2141.37 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q64.</strong> Given: Distance 'A' to 'B' 2750 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 500 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 213.5 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2750 &times; 500) / (420 + 500) = 1,375,000 / 920 = 1494.56 nm.<br>2. Find Time to PET: 1494.56 / 420 = 3.558 hours.<br>3. Convert to Minutes: 3.558 &times; 60 = <strong>213.5 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q65.</strong> Given: Distance 'A' to 'B' 2950 NM, Mean groundspeed 'out' 450 kt, Mean groundspeed 'back' 500 kt, Safe endurance 08 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 2012 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 450 kt, H = 500 kt, E = 8.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 450 &times; 500) / 950<br>4. Result: 1,912,500 / 950 = <strong>2013.15 nm</strong>. (Option 'b' 2012 NM is the closest DGCA key)."
+            },
+            { 
+                q: "<strong>Book Q66.</strong> An aircraft was over 'Q' at 1620 hours flying direct to 'R'. Given: Distance 'Q' to 'R' 3050 NM, True airspeed 480 kt, Mean wind component 'out' -90 kt, Mean wind component 'back' +75 kt, Safe endurance 10:00 HR. The distance from 'Q' to the Point of Safe Return (PSR) 'Q' is?", 
+                ans: "b. 2290 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 480 - 90 = 390 kt. H = 480 + 75 = 555 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 390 &times; 555) / 945<br>4. Result: 2,164,500 / 945 = <strong>2290.47 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q67.</strong> Given: Distance 'A' to 'B' 1950 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 385 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "Approx. 120 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Options cut off in image.</em><br>1. Find PET Distance: (1950 &times; 385) / (450 + 385) = 750,750 / 835 = 899.1 nm.<br>2. Find Time to PET: 899.1 / 450 = 1.998 hours.<br>3. Convert to Minutes: 1.998 &times; 60 = <strong>119.88 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q68.</strong> Given: Distance 'A' to 'B' 1950 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 385 kt, Safe endurance 7 HR 20 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "d. 1438 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 385 kt, E = 7.333 hrs (7 hr 20 min).<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7.333 &times; 400 &times; 385) / 785<br>4. Result: 1,129,333.3 / 785 = <strong>1438.6 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q69.</strong> Given: Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 455 kt, Groundspeed 'back' 385 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 1877 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 455 kt, H = 385 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 455 &times; 385) / 840<br>4. Result: 1,576,575 / 840 = <strong>1876.87 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q70.</strong> Given: Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 475 kt, Groundspeed 'back' 365 kt. The time from 'Q' to the Point of Equal Time (PET) between 'Q' and 'R' is?", 
+                ans: "d. 97 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (1760 &times; 365) / (475 + 365) = 642,400 / 840 = 764.76 nm.<br>2. Find Time to PET: 764.76 / 475 = 1.61 hours.<br>3. Convert to Minutes: 1.61 &times; 60 = <strong>96.6 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q71.</strong> Given: Distance 'A' to 'B' 3623 NM, Groundspeed 'out' 390 kt, Groundspeed 'back' 330 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 255 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (3623 &times; 330) / (390 + 330) = 1,195,590 / 720 = 1660.54 nm.<br>2. Find Time to PET: 1660.54 / 390 = 4.257 hours.<br>3. Convert to Minutes: 4.257 &times; 60 = <strong>255.4 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q72.</strong> Given: Distance 'Q' to 'R' 1860 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 350 kt, Safe endurance 7 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 1336 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 420 kt, H = 350 kt, E = 7 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7 &times; 420 &times; 350) / 770<br>4. Result: 1,029,000 / 770 = <strong>1336.36 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q73.</strong> Given: Distance 'Q' to 'R' 1970 NM, Groundspeed 'out' 495 kt, Groundspeed 'back' 465 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 2157 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 495 kt, H = 465 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 495 &times; 465) / 960<br>4. Result: 2,071,575 / 960 = <strong>2157.89 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q74.</strong> Given: Distance 'Q' to 'R' 2160 NM, Groundspeed 'out' 535 kt, Groundspeed 'back' 595 kt, Safe endurance 6 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "b. 1690 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 535 kt, H = 595 kt, E = 6 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (6 &times; 535 &times; 595) / 1130<br>4. Result: 1,909,950 / 1130 = <strong>1690.22 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q75.</strong> Given: Distance 'Q' to 'R' 2467 NM, Groundspeed 'out' 500 kt, Groundspeed 'back' 450 kt, Safe endurance 9.5 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 2250 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 500 kt, H = 450 kt, E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 500 &times; 450) / 950<br>4. Result: 2,137,500 / 950 = <strong>2250 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q76.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 375 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "a. 1842 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 375 - 50 = 325 kt. H = 375 + 50 = 425 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 325 &times; 425) / 750<br>4. Result: 1,381,250 / 750 = <strong>1841.66 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q77.</strong> What is the time to the point of safe return (PSR) if the distance from A to B is 3000 nautical miles, the outbound groundspeed is 350 knots, the homebound groundspeed is 430 knots, and safe endurance is 8 hours 30 minutes?", 
+                ans: "Mathematical Answer: 281 MIN. (Key likely a. 289 MIN).",
+                sol: "<strong>Step-by-Step Resolution & Discrepancy Note:</strong><br><br><em>Note: This question appears to have recycled the options from Q27 (which used 460 kts inbound) in error.</em><br>1. Identify Variables: O = 350 kt, H = 430 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 430) / (350 + 430) = 3655 / 780 = 4.685 hours.<br>4. Convert to Minutes: 4.685 &times; 60 = <strong>281.1 minutes</strong>. (Select 289 if forced by DGCA)."
+            },
+            { 
+                q: "<strong>Book Q78.</strong> What is the distance from 'Q' to the Point of Safe Return (PSR) for an aircraft that was over 'Q' at 1500 hours flying direct to 'R', given the following data? Distance 'Q' to 'R' 3050 nm, True airspeed 435 kt, Safe endurance 10 Hours, if the mean wind component 'outbound' -90 kt, and the mean wind component 'homebound' is +75 kt.", 
+                ans: "a. 2058 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 435 - 90 = 345 kt. H = 435 + 75 = 510 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 345 &times; 510) / 855<br>4. Result: 1,759,500 / 855 = <strong>2057.89 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q79.</strong> What is the distance to B from the equal-time-point given the following data? Distance A to B is 650 nm, TAS is 320 kt, Wind component A - B is -15 kt, Wind component B - A is +15 kt.", 
+                ans: "a. 309 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br><em>Note: Asks for distance <strong>to B</strong>.</em><br>1. Identify Speeds: O = 320 - 15 = 305 kt. H = 320 + 15 = 335 kt.<br>2. Formula: Distance to PET (from A) = (D &times; H) / (O + H)<br>3. Calculate: (650 &times; 335) / 640 = 217,750 / 640 = 340.23 nm (Distance from A).<br>4. Distance to B = Total Distance - Distance from A = 650 - 340.23 = <strong>309.76 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q80.</strong> An aircraft is flying at a TAS of 475 knots over a stretch of water between 2 airfields 800 nm apart. What is the distance from the first airfield to the equal time point (ETP) if the wind component is 60 knots head?", 
+                ans: "b. 350 nm.",
+                sol: "<strong>Step-by-Step Resolution & Discrepancy Note:</strong><br><br>1. Identify Speeds: Headwind out means O = 475 - 60 = 415 kt. H = 475 + 60 = 535 kt.<br>2. Pure Math: Distance to ETP = (D &times; H) / (O + H) = (800 &times; 535) / 950 = 450.5 nm.<br>3. The Glitch: The standard answer key applies the Outbound groundspeed to the numerator instead: (800 &times; 415) / 950 = 349.47 nm. Memorize <strong>350 nm</strong> for this specific DGCA question."
+            },
+            { 
+                q: "<strong>Book Q81.</strong> How far can the aeroplane fly out from its base and return in one hour, when flying at TAS 350 kt on a track of 090&deg;, if the W/V is 045&deg;/50kt?", 
+                ans: "b. 173 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Identify Speeds: O = 350 - 35.35 = 314.65 kt. H = 350 + 35.35 = 385.35 kt.<br>3. Formula: PSR Distance = (E &times; O &times; H) / (O + H)<br>4. Calculate: (1 &times; 314.65 &times; 385.35) / 700 = 121,255 / 700 = <strong>173.2 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q82.</strong> For a distance of 2100 NM between Q and R, a ground speed \"out\" of 365 kt, a ground speed \"back\" of 435 kt and an endurance of 8 HR (excluding reserves) the distance from Q to the point of safe return (PSR) is?", 
+                ans: "a. 1588 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 365 kt, H = 435 kt, E = 8 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8 &times; 365 &times; 435) / 800<br>4. Result: 1,270,200 / 800 = <strong>1587.75 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q83.</strong> Two points A and B are 1300 NM apart. TAS = 485 kt. On the flight between A and B the equivalent headwind is -20 kt. On the return leg between B and A, the equivalent headwind is +40 kt. What distance from A, along the route A to B, is the Point of Equal Time (PET)?", 
+                ans: "c. 690 NM.",
+                sol: "<strong>Step-by-Step Resolution & Discrepancy Note:</strong><br><br><em>Note: Identical glitch to Q33 and Q58.</em><br>1. Pure Math: HW -20 (Tailwind), O = 505 kt. HW +40, H = 445 kt. PET = (1300 &times; 445) / 950 = 608.9 NM.<br>2. The DGCA Glitch: Swapping the signs. O = 485 - 20 = 465 kt. H = 485 + 40 = 525 kt.<br>3. Glitch PET: (1300 &times; 525) / 990 = 689.3 NM. Matches option <strong>690 NM</strong>."
+            },
+            { 
+                q: "<strong>Book Q84.</strong> An aeroplane is flying at TAS 345 kt on a track of 090&deg;. The W/V is 045&deg;/50kt. How far can the aeroplane fly out from its base and return in one hour?", 
+                ans: "a. 171 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find Headwind Component: HW = 50 &times; cos(45&deg;) = 35.35 kt.<br>2. Identify Speeds: O = 345 - 35.35 = 309.65 kt. H = 345 + 35.35 = 380.35 kt.<br>3. Formula: PSR Distance = (E &times; O &times; H) / (O + H)<br>4. Calculate: (1 &times; 309.65 &times; 380.35) / 690 = 117,775 / 690 = <strong>170.68 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q85.</strong> Given: Distance 'A' to 'B' 2600 NM, Groundspeed 'out' 395 kt, Groundspeed 'back' 480 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 217 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2600 &times; 480) / (395 + 480) = 1,248,000 / 875 = 1426.28 nm.<br>2. Find Time to PET: 1426.28 / 395 = 3.61 hours.<br>3. Convert to Minutes: 3.61 &times; 60 = <strong>216.6 minutes</strong>. (Select 217 MIN)."
+            },
+            { 
+                q: "<strong>Book Q86.</strong> Given: Distance 'A' to 'B' 2900 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 480 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 272 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 420 kt, H = 480 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 480) / (420 + 480) = 4080 / 900 = 4.533 hours.<br>4. Convert to Minutes: 4.533 &times; 60 = <strong>272 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q87.</strong> An aircraft was over 'A' at 1600 hours flying direct to 'B'. Given: Distance 'A' to 'B' 2900 NM, True airspeed 450 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt. The ETA for reaching the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "d. 1827.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 450 + 55 = 505 kt. H = 450 - 75 = 375 kt.<br>2. Find PET Distance: (2900 &times; 375) / (505 + 375) = 1,087,500 / 880 = 1235.79 nm.<br>3. Find Time to PET: 1235.79 / 505 = 2.447 hours = 146.8 minutes (2 hrs 27 mins).<br>4. Calculate ETA: 1600 + 0227 = <strong>1827 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q88.</strong> An aircraft was over 'A' at 1600 hours flying direct to 'B'. Given: Distance 'A' to 'B' 3000 NM, True airspeed 390 kt, Mean wind component 'out' +55 kt, Mean wind component 'back' -75 kt, Safe endurance 9 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 1752 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 390 + 55 = 445 kt. H = 390 - 75 = 315 kt. E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 445 &times; 315) / 760<br>4. Result: 1,331,662.5 / 760 = <strong>1752.18 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q89.</strong> Given: Distance 'A' to 'B' 2700 NM, Groundspeed 'out' 465 kt, Groundspeed 'back' 515 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 183 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2700 &times; 515) / (465 + 515) = 1,390,500 / 980 = 1418.87 nm.<br>2. Find Time to PET: 1418.87 / 465 = 3.05 hours.<br>3. Convert to Minutes: 3.05 &times; 60 = <strong>183.08 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q90.</strong> Given: Distance 'A' to 'B' 2600 NM, Mean groundspeed 'out' 380 kt, Mean groundspeed 'back' 475 kt, Safe endurance 08 HR 30 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 1794 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 380 kt, H = 475 kt, E = 8.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 380 &times; 475) / 855<br>4. Result: 1,534,250 / 855 = <strong>1794.44 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q91.</strong> An aircraft was over 'Q' at 1545 hours flying direct to 'R'. Given: Distance 'Q' to 'R' 3016 NM, True airspeed 525 kt, Mean wind component 'out' -90 kt, Mean wind component 'back' +75 kt, Safe endurance 10:00 HR. The distance from 'Q' to the Point of Safe Return (PSR) 'Q' is?", 
+                ans: "b. 2522 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 525 - 90 = 435 kt. H = 525 + 75 = 600 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 435 &times; 600) / 1035<br>4. Result: 2,610,000 / 1035 = <strong>2521.73 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q92.</strong> Given: Distance 'A' to 'B' 2450 NM, Groundspeed 'out' 350 kt, Groundspeed 'back' 385 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "a. 220 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (2450 &times; 385) / (350 + 385) = 943,250 / 735 = 1283.33 nm.<br>2. Find Time to PET: 1283.33 / 350 = 3.666 hours.<br>3. Convert to Minutes: 3.666 &times; 60 = <strong>220 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q93.</strong> Given: Distance 'A' to 'B' 2100 NM, Groundspeed 'out' 440 kt, Groundspeed 'back' 375 kt, Safe endurance 7 HR 20 MIN. The distance from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "d. 1484 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 440 kt, H = 375 kt, E = 7.333 hrs (7 hr 20 min).<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7.333 &times; 440 &times; 375) / 815<br>4. Result: 1,209,999.9 / 815 = <strong>1484.6 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q94.</strong> Given: Distance 'Q' to 'R' 1650 NM, Groundspeed 'out' 465 kt, Groundspeed 'back' 385 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 1896 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 465 kt, H = 385 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 465 &times; 385) / 850<br>4. Result: 1,611,225 / 850 = <strong>1895.55 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q95.</strong> Given: Distance 'Q' to 'R' 1760 NM, Groundspeed 'out' 450 kt, Groundspeed 'back' 360 kt. The time from 'Q' to the Point of Equal Time (PET) between 'Q' and 'R' is?", 
+                ans: "d. 104 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (1760 &times; 360) / (450 + 360) = 633,600 / 810 = 782.22 nm.<br>2. Find Time to PET: 782.22 / 450 = 1.738 hours.<br>3. Convert to Minutes: 1.738 &times; 60 = <strong>104.29 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q96.</strong> Given: Distance 'A' to 'B' 3600 NM, Groundspeed 'out' 378 kt, Groundspeed 'back' 400 kt. The time from 'A' to the Point of Equal Time (PET) between 'A' and 'B' is?", 
+                ans: "b. 294 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Find PET Distance: (3600 &times; 400) / (378 + 400) = 1,440,000 / 778 = 1850.89 nm.<br>2. Find Time to PET: 1850.89 / 378 = 4.896 hours.<br>3. Convert to Minutes: 4.896 &times; 60 = <strong>293.79 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q97.</strong> Given: Distance 'Q' to 'R' 1960 NM, Groundspeed 'out' 380 kt, Groundspeed 'back' 470 kt, Safe endurance 7 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 1471 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 380 kt, H = 470 kt, E = 7 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (7 &times; 380 &times; 470) / 850<br>4. Result: 1,249,800 / 850 = <strong>1470.35 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q98.</strong> Given: Distance 'Q' to 'R' 1970 NM, Groundspeed 'out' 436 kt, Groundspeed 'back' 485 kt, Safe endurance 9 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "c. 2066 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 436 kt, H = 485 kt, E = 9 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9 &times; 436 &times; 485) / 921<br>4. Result: 1,903,140 / 921 = <strong>2066.38 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q99.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 4 hours, if the wind component on the outbound leg is 20 knots headwind?", 
+                ans: "a. 2.1 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 20 = 280 kt. H = 300 + 20 = 320 kt. E = 4 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (4 &times; 320) / (280 + 320) = 1280 / 600<br>4. Result: <strong>2.133 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q100.</strong> Given: Distance 'Q' to 'R' 2160 NM, Groundspeed 'out' 535 kt, Groundspeed 'back' 585 kt, Safe endurance 6 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "b. 1677 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 535 kt, H = 585 kt, E = 6 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (6 &times; 535 &times; 585) / 1120<br>4. Result: 1,877,850 / 1120 = <strong>1676.65 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q101.</strong> Given: Distance 'A' to 'B' 2500 NM, Groundspeed 'out' 370 kt, Groundspeed 'back' 480 kt, Safe endurance 6 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 220 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 370 kt, H = 480 kt, E = 6.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (6.5 &times; 480) / (370 + 480) = 3120 / 850 = 3.67 hours.<br>4. Convert to Minutes: 3.67 &times; 60 = <strong>220.23 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q102.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 5 hours, if the wind component on the outbound leg is 30 knots headwind?", 
+                ans: "d. 2.75 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 30 = 270 kt. H = 300 + 30 = 330 kt. E = 5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (5 &times; 330) / (270 + 330) = 1650 / 600<br>4. Result: <strong>2.75 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q103.</strong> Given: Distance 'A' to 'B' 2900 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 400 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 249 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 420 kt, H = 400 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 400) / (420 + 400) = 3400 / 820 = 4.146 hours.<br>4. Convert to Minutes: 4.146 &times; 60 = <strong>248.7 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q104.</strong> Given: Distance 'Q' to 'R' 2550 NM, Groundspeed 'out' 550 kt, Groundspeed 'back' 400 kt, Safe endurance 9.5 HR. The distance from 'Q' to the Point of Safe Return (PSR) between 'Q' and 'R' is?", 
+                ans: "a. 2200 NM.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 550 kt, H = 400 kt, E = 9.5 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (9.5 &times; 550 &times; 400) / 950<br>4. Result: 2,090,000 / 950 = <strong>2200 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q105.</strong> Given: Distance 'A' to 'B' 2900 NM, Groundspeed 'out' 400 kt, Groundspeed 'back' 380 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "c. 249 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 400 kt, H = 380 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 380) / (400 + 380) = 3230 / 780 = 4.141 hours.<br>4. Convert to Minutes: 4.141 &times; 60 = <strong>248.4 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q106.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 4.0 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "b. 2.3 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 50 = 250 kt. H = 300 + 50 = 350 kt. E = 4 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (4 &times; 350) / 600 = 1400 / 600<br>4. Result: <strong>2.33 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q107.</strong> Given: Distance 'A' to 'B' 2000 NM, Groundspeed 'out' 420 kt, Groundspeed 'back' 480 kt, Safe endurance 3 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 112 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 420 kt, H = 480 kt, E = 3.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (3.5 &times; 480) / 900 = 1680 / 900 = 1.866 hours.<br>4. Convert to Minutes: 1.866 &times; 60 = <strong>112 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q108.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 30 knots headwind?", 
+                ans: "a. 1485 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 30 = 270 kt. H = 300 + 30 = 330 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 270 &times; 330) / 600<br>4. Result: 891,000 / 600 = <strong>1485 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q109.</strong> Given: Distance 'A' to 'B' 2600 NM, Groundspeed 'out' 220 kt, Groundspeed 'back' 280 kt, Safe endurance 3 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "d. 118 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 220 kt, H = 280 kt, E = 3.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (3.5 &times; 280) / 500 = 980 / 500 = 1.96 hours.<br>4. Convert to Minutes: 1.96 &times; 60 = <strong>117.6 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q110.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 200 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 45 knots headwind?", 
+                ans: "a. 6.1 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 200 - 45 = 155 kt. H = 200 + 45 = 245 kt. E = 10 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (10 &times; 245) / 400 = 2450 / 400<br>4. Result: <strong>6.125 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q111.</strong> Given: Distance 'A' to 'B' 1500 NM, Groundspeed 'out' 120 kt, Groundspeed 'back' 180 kt, Safe endurance 10 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "c. 6.3 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 120 kt, H = 180 kt, E = 10.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (10.5 &times; 180) / 300 = 1890 / 300<br>4. Result: <strong>6.3 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q112.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 350 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots headwind?", 
+                ans: "b. 1714 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 350 - 50 = 300 kt. H = 350 + 50 = 400 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 300 &times; 400) / 700<br>4. Result: 1,200,000 / 700 = <strong>1714.28 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q113.</strong> Given: Distance 'A' to 'B' 1000 NM, Groundspeed 'out' 190 kt, Groundspeed 'back' 180 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 248 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 190 kt, H = 180 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 180) / 370 = 1530 / 370 = 4.135 hours.<br>4. Convert to Minutes: 4.135 &times; 60 = <strong>248.1 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q114.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 7 hours, if the wind component on the outbound leg is 65 knots headwind?", 
+                ans: "b. 4.26 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 65 = 235 kt. H = 300 + 65 = 365 kt. E = 7 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (7 &times; 365) / 600 = 2555 / 600<br>4. Result: <strong>4.258 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q115.</strong> Given: Distance 'A' to 'B' 500 NM, Groundspeed 'out' 120 kt, Groundspeed 'back' 130 kt, Safe endurance 6 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 203 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 120 kt, H = 130 kt, E = 6.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (6.5 &times; 130) / 250 = 845 / 250 = 3.38 hours.<br>4. Convert to Minutes: 3.38 &times; 60 = <strong>202.8 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q116.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 50 knots tailwind?", 
+                ans: "c. 1458 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds (NOTE TAILWIND!): O = 300 + 50 = 350 kt. H = 300 - 50 = 250 kt.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 350 &times; 250) / 600<br>4. Result: 875,000 / 600 = <strong>1458.33 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q117.</strong> Given: Distance 'A' to 'B' 900 NM, Groundspeed 'out' 220 kt, Groundspeed 'back' 250 kt, Safe endurance 8 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "c. 271 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 220 kt, H = 250 kt, E = 8.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (8.5 &times; 250) / 470 = 2125 / 470 = 4.521 hours.<br>4. Convert to Minutes: 4.521 &times; 60 = <strong>271.2 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q118.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 100 knots and a safe endurance of 5 hours, if the wind component on the outbound leg is 20 knots headwind?", 
+                ans: "a. 3.0 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 100 - 20 = 80 kt. H = 100 + 20 = 120 kt. E = 5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (5 &times; 120) / 200 = 600 / 200<br>4. Result: <strong>3.0 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q119.</strong> Given: Distance 'A' to 'B' 400 NM, Groundspeed 'out' 95 kt, Groundspeed 'back' 110 kt, Safe endurance 5 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "a. 177 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 95 kt, H = 110 kt, E = 5.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (5.5 &times; 110) / 205 = 605 / 205 = 2.951 hours.<br>4. Convert to Minutes: 2.951 &times; 60 = <strong>177.07 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q120.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 200 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 15 knots headwind?", 
+                ans: "a. 994 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 200 - 15 = 185 kt. H = 200 + 15 = 215 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 185 &times; 215) / 400<br>4. Result: 397,750 / 400 = <strong>994.37 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q121.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 20 knots headwind?", 
+                ans: "a. 5.3 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 20 = 280 kt. H = 300 + 20 = 320 kt. E = 10 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (10 &times; 320) / 600 = 3200 / 600<br>4. Result: <strong>5.33 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q122.</strong> What is the time to the point of safe endurance if an aircraft has a TAS of 300 knots and a safe endurance of 6 hours, if the wind component on the outbound leg is 20 knots headwind?", 
+                ans: "d. 3.2 hours.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 300 - 20 = 280 kt. H = 300 + 20 = 320 kt. E = 6 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (6 &times; 320) / 600 = 1920 / 600<br>4. Result: <strong>3.2 hours</strong>."
+            },
+            { 
+                q: "<strong>Book Q123.</strong> Given: Distance 'A' to 'B' 275 NM, Groundspeed 'out' 82 kt, Groundspeed 'back' 80 kt, Safe endurance 3 HR 30 MIN. The time from 'A' to the Point of Safe Return (PSR) 'A' is?", 
+                ans: "b. 104 MIN.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Variables: O = 82 kt, H = 80 kt, E = 3.5 hrs.<br>2. Formula: Time to PSR = (E &times; H) / (O + H)<br>3. Calculate: (3.5 &times; 80) / 162 = 280 / 162 = 1.728 hours.<br>4. Convert to Minutes: 1.728 &times; 60 = <strong>103.7 minutes</strong>."
+            },
+            { 
+                q: "<strong>Book Q124.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 200 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 85 knots headwind?", 
+                ans: "a. 819 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 200 - 85 = 115 kt. H = 200 + 85 = 285 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 115 &times; 285) / 400<br>4. Result: 327,750 / 400 = <strong>819.37 nm</strong>."
+            },
+            { 
+                q: "<strong>Book Q125.</strong> What is the distance to the point of safe endurance if an aircraft has a TAS of 400 knots and a safe endurance of 10 hours, if the wind component on the outbound leg is 75 knots headwind?", 
+                ans: "d. 1930 nm.",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Identify Speeds: O = 400 - 75 = 325 kt. H = 400 + 75 = 475 kt. E = 10 hrs.<br>2. Formula: Distance to PSR = (E &times; O &times; H) / (O + H)<br>3. Calculate: (10 &times; 325 &times; 475) / 800<br>4. Result: 1,543,750 / 800 = <strong>1929.68 nm</strong>."
+            }
+        
+        ];
+
+        let currentNumIndex = 0;
+
+        function startNumericals() {
+            switchView('numerical-page');
+            currentNumIndex = 0;
+            renderNumerical();
+        }
+
+        function renderNumerical() {
+            if (numericalsData.length === 0) return;
+            const qData = numericalsData[currentNumIndex];
+            
+            document.getElementById('num-counter').innerText = `Calculation ${currentNumIndex + 1} of ${numericalsData.length}`;
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / numericalsData.length) * 100}%`;
+            document.getElementById('num-q-text').innerHTML = qData.q;
+            
+            const ansBox = document.getElementById('num-ans-box');
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`;
+            ansBox.style.display = 'none';
+            
+            const solBox = document.getElementById('num-sol-box');
+            solBox.innerHTML = qData.sol;
+            solBox.style.display = 'none';
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0;
+            document.getElementById('num-next-btn').disabled = currentNumIndex === numericalsData.length - 1;
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

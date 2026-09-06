@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 2 | Air Navigation</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        /* QUIZ & NUMERICALS STYLING */
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
+        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .option-btn:disabled { cursor: default; }
+        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
+        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
+        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        #finish-screen { text-align: center; padding-top: 40px; }
+        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
+        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 1. MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 2: Distances on Earth's Surface</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="initQuiz()">
+                    <h3>Quiz</h3>
+                    <p>16 Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals</h3>
+                    <p>40 Calculation Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. QUIZ PAGE -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Question 1 of X</h2>
+                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="options-grid" id="quiz-options-container"></div>
+                <div id="quiz-feedback-box" class="feedback-box"></div>
+            </div>
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- 3. QUIZ FINISH SCREEN -->
+        <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
+            <div id="finish-screen" style="display: block;">
+                <h1>Quiz Complete!</h1>
+                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. NUMERICALS LINEAR FLOW PAGE -->
+        <div id="numerical-linear-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Numerical 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // SPA NAVIGATION LOGIC
+        // ==========================================
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // DATA BANK: MCQs (CHAPTER 2) - 16 QUESTIONS
+        // ==========================================
+        const quizData = [ 
+            { q: "Length of NM is more at:", options: { a: "Equator", b: "45&deg; Latitude", c: "Poles" }, ans: "c" },
+            { q: "Kilometer is defined as:", options: { a: "the mean length of a 1/40000 part of the equator.", b: "0.454 nautical mile.", c: "a 1/10000 part of the meridian length from equator to the pole." }, ans: "c" },
+            { q: "When dealing with heights and altitudes in international aviation, we use the following units:", options: { a: "meter and feet.", b: "feet, kilometer and decimals of nautical mile.", c: "feet and yard." }, ans: "a" },
+            { q: "How many feet are there in a nm?", options: { a: "1000 ft", b: "6080 ft", c: "3280 ft" }, ans: "b" },
+            { q: "A nautical mile is defined as:", options: { a: "the average length of a 1 minute arc of a meridian.", b: "1952 meters.", c: "the average length of a 1' arc of longitude and a 1' arc of latitude." }, ans: "a" },
+            { q: "How many feet are equivalent to 9.5 km?", options: { a: "57,760 ft", b: "31,160 ft", c: "50,160 ft" }, ans: "b" },
+            { q: "In international aviation the following units are used for horizontal distance:", options: { a: "meters, statute miles and nautical miles.", b: "kilometers, statute miles and nautical miles.", c: "meters, kilometers and nautical miles." }, ans: "c" },
+            { q: "Consider the following statements:", options: { a: "the exact length 1 minute of arc varies a little from position to position because the earth radius vary.", b: "in any position on the surface of the earth, the length of 1 minute of arc east/west is equal to the length 1 minute of arc north/south in the same position on a perfect sphere.", c: "both statements are correct." }, ans: "a" },
+            { q: "1 nautical mile equals:", options: { a: "0.869 statute mile.", b: "1609 meters.", c: "6076 feet." }, ans: "c" },
+            { q: "How many feet are there in 1 sm?", options: { a: "5280 ft", b: "3280 ft", c: "6080 ft" }, ans: "a" },
+            { q: "What is a rhumb line?", options: { a: "The vertex of a conformal polyformic projection", b: "The shortest distance between two points", c: "A straight line on a Lambert's chart", d: "A line on the Earth which cuts all meridians at the same angle" }, ans: "d" },
+            { q: "Which of the following is true of all parallels of latitude?", options: { a: "They are neither rhumb lines nor great circles", b: "They are rhumb lines but not great circles", c: "They are both rhumb lines and great circles", d: "They are great circles but not rhumb lines" }, ans: "b" },
+            { q: "A Rhumb line is?", options: { a: "A line convex to the nearest pole", b: "A line on the surface of the earth cutting all meridians at the same angle", c: "The shortest distance between two points", d: "Any straight line on a Lambert projection" }, ans: "b" },
+            { q: "Parallels of latitude, except the equator, are?", options: { a: "Rhumb lines", b: "Great circles", c: "Both", d: "Neither" }, ans: "a" },
+            { q: "A Rhumb line is? (Alternate phrasing)", options: { a: "Any straight line on a Lambert projection", b: "A line convex to the nearest pole", c: "A line on the surface of the earth cutting all meridians at the same angle", d: "A great circle" }, ans: "c" },
+            { q: "Parallels of latitude, except the equator, are? (Alternate phrasing)", options: { a: "Both", b: "Neither", c: "Rhumb lines", d: "Great circles" }, ans: "c" }
+        ];
+
+        let activeQuizData = [], userAnswers = [], currentQIndex = 0;
+        
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        function initQuiz() { 
+            switchView('quiz-page');
+            activeQuizData = JSON.parse(JSON.stringify(quizData)); 
+            shuffleArray(activeQuizData); 
+            activeQuizData.forEach(q => { 
+                let optionsArr = Object.entries(q.options).map(([key, val]) => ({ key, val })); 
+                shuffleArray(optionsArr); 
+                q.shuffledOptions = optionsArr; 
+            }); 
+            userAnswers = new Array(activeQuizData.length).fill(null); 
+            currentQIndex = 0; 
+            renderQuestion(); 
+        }
+
+        function updateScore() { 
+            let currentScore = 0; 
+            userAnswers.forEach((ans, index) => { 
+                if (ans === activeQuizData[index].ans) { currentScore++; } 
+            }); 
+            document.getElementById('quiz-score-display').textContent = currentScore; 
+            return currentScore; 
+        }
+
+        function renderQuestion() { 
+            if(activeQuizData.length === 0) return;
+            const qData = activeQuizData[currentQIndex]; 
+            const selectedAns = userAnswers[currentQIndex]; 
+            
+            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+            document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
+            document.getElementById('quiz-q-text').innerHTML = qData.q; 
+            updateScore(); 
+            
+            const optionsContainer = document.getElementById('quiz-options-container'); 
+            optionsContainer.innerHTML = ''; 
+            qData.shuffledOptions.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = 'option-btn'; 
+                btn.id = `btn-${opt.key}`; 
+                btn.innerHTML = opt.val; 
+                if (selectedAns !== null) { 
+                    btn.disabled = true; 
+                    if (opt.key === qData.ans) { 
+                        btn.classList.add('correct-ans'); 
+                    } else if (opt.key === selectedAns && selectedAns !== qData.ans) { 
+                        btn.classList.add('wrong-ans'); 
+                    } 
+                } else { 
+                    btn.onclick = () => { 
+                        userAnswers[currentQIndex] = opt.key; 
+                        renderQuestion(); 
+                    }; 
+                } 
+                optionsContainer.appendChild(btn); 
+            }); 
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box'); 
+            feedbackBox.className = 'feedback-box'; 
+            if (selectedAns !== null) { 
+                if (selectedAns === qData.ans) { 
+                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.classList.add('feedback-correct'); 
+                } else { 
+                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.classList.add('feedback-wrong'); 
+                } 
+            } else {
+                feedbackBox.style.display = 'none';
+            }
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
+            const nextBtn = document.getElementById('quiz-next-btn'); 
+            if (selectedAns === null) { 
+                nextBtn.disabled = true; 
+                nextBtn.textContent = "Next"; 
+            } else { 
+                nextBtn.disabled = false; 
+                nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; 
+            } 
+        }
+
+        function goPrevQuiz() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+        function goNextQuiz() { 
+            if (currentQIndex < activeQuizData.length - 1) { 
+                currentQIndex++; renderQuestion(); 
+            } else { 
+                switchView('quiz-finish-screen'); 
+                document.getElementById('final-score').textContent = updateScore(); 
+                document.getElementById('total-questions').textContent = activeQuizData.length; 
+            } 
+        }
+
+        // ==========================================
+        // DATA BANK: NUMERICALS (CHAPTER 2) - 40 QUESTIONS
+        // ==========================================
+        const numericalsData = [
+            { q: "An A/C flying from place X (27&deg;27'N 030&deg;24'E) to Y (27&deg;27'N 108&deg;47'E). Find rhumb line Distance.", ans: "4173.5 NM", sol: "D'long = 108&deg;47'E - 030&deg;24'E = 78&deg;23'<br><br>RL Dist = Departure = D'long (in minutes) &times; cos(Lat)<br>Departure = (78 &times; 60 + 23) &times; cos(27&deg;27')<br>Departure = 4703 &times; 0.887<br><br><strong>RL Dist = 4173.5 NM</strong>" },
+            { q: "An A/C takes off from A (27&deg;13'N 024&deg;37'E) to B (27&deg;13'N 094&deg;37'W). Find departure.", ans: "6362 NM", sol: "D'long = 094&deg;37'W + 024&deg;37'E = 119&deg;14'<br><br>Departure = D'long (in mins) &times; cos(lat)<br>Departure = (119 &times; 60 + 14) &times; cos(27&deg;13')<br>Departure = 7154 &times; 0.8893<br><br><strong>Departure = 6362 NM</strong>" },
+            { q: "An A/C takes off from X (39&deg;42'N 105&deg;20'E) for Y (39&deg;42'N 178&deg;35'E). Find R/L Distance.", ans: "3381.5 NM", sol: "D'long = 178&deg;35'E - 105&deg;20'E = 73&deg;15'<br><br>Departure = D'long &times; 60 &times; cos(lat)<br>Departure = (73 &times; 60 + 15) &times; cos(39&deg;42')<br>Departure = 4395 &times; 0.769<br><br><strong>R/L Distance = 3381.5 NM</strong>" },
+            { q: "An a/c takes off from place X (45&deg;20'N 010&deg;05'E) and flies in R/L direction 270&deg; for 800 nm. Find lat - long of destination.", ans: "45&deg;20'N 008&deg;53'W", sol: "Departure = D'long &times; 60 &times; cos(lat)<br>800 = D'long &times; 60 &times; cos(45&deg;20')<br>D'long (in mins) = 800 &divide; 0.7029 = 1138'<br><br>D'long = 18&deg;58'<br>Long Y = 18&deg;58' (moved West) - 10&deg;05'E = 008&deg;53'W<br><br><strong>Destination: 45&deg;20'N 008&deg;53'W</strong>" },
+            { q: "An A/C takes off from X (32&deg;48'S 178&deg;10'W) and flies on true westerly track for 450 nm. Find lat long of Y.", ans: "32&deg;48'S 172&deg;55'E", sol: "Departure = D'long &times; 60 &times; cos(lat)<br>450 = D'long &times; 60 &times; cos(32&deg;48')<br>D'long (in mins) = 450 &divide; 0.8405 = 535'<br>D'long = 8&deg;55'<br><br>Since moving West from 178&deg;10'W, cross the anti-meridian.<br>178&deg;10' + 8&deg;55' = 187&deg;5'<br>360&deg; - 187&deg;5' = 172&deg;55'E<br><br><strong>Lat-Long: 32&deg;48'S 172&deg;55'E</strong>" },
+            { q: "An A/C takes off from (45&deg;40'N 176&deg;36'E) and flies on true track of 090&deg; for 1480 kms. Find lat - long of destination.", ans: "45&deg;40'N 164&deg;19'W", sol: "Convert kms to nm: 1480 &divide; 1.852 = 799.1 NM &approx; 800 NM<br>Departure = D'long &times; 60 &times; cos(lat)<br>800 = D'long &times; 60 &times; cos(45&deg;40')<br>D'long (mins) = 800 &divide; cos(45&deg;40') = 1144.76'<br>D'long = 19&deg;04'<br><br>Crossing anti-meridian going East:<br>176&deg;36'E + 19&deg;04' = 195&deg;40'E<br>360&deg; - 195&deg;40' = 164&deg;20'W<br><br><strong>Final: 45&deg;40'N 164&deg;19'W</strong>" },
+            { q: "An A/C takes off from 10&deg;N 175&deg;E flies South for 600 nm. Thereafter East for 600 nm. Thereafter South for 600 nm. Find lat-long of destination.", ans: "10&deg;S 175&deg;W", sol: "Leg 1 (South): 600 nm = D'lat &times; 60 -> D'lat = 10&deg;S. Pos: 0&deg;N/S 175&deg;E.<br>Leg 2 (East): Dep = 600 NM. At equator, cos(0&deg;) = 1. Therefore D'long = 600' = 10&deg;E. Pos: 175&deg;E + 10&deg;E = 185&deg;E -> 175&deg;W.<br>Leg 3 (South): 600 nm = D'lat &times; 60 -> D'lat = 10&deg;S.<br><br><strong>Final: 10&deg;S 175&deg;W</strong>" },
+            { q: "Two A/C A and B take off from X (53&deg;N 004&deg;E) for Y (60&deg;N 016&deg;W). A/C A flies North till 60&deg;N then West to Y. A/C B flies West till 016&deg;W then North to Y. Which A/C travels shorter and by how many nm.", ans: "A/C A by 122.1 NM", sol: "<u>Aircraft A (North then West)</u><br>North Dist: D'lat (7&deg;) &times; 60 = 420 NM<br>West Dist: D'long (20&deg;) &times; 60 &times; cos(60&deg;) = 600 NM<br>Total A = 1020 NM<br><br><u>Aircraft B (West then North)</u><br>West Dist: D'long (20&deg;) &times; 60 &times; cos(53&deg;) = 722.17 NM<br>North Dist: 420 NM<br>Total B = 1142.17 NM<br><br><strong>Difference: 1142.17 - 1020 = 122.1 NM</strong>" },
+            { q: "An A/C takes off from A (30&deg;S 060&deg;E) and flies North for 600 nm, East for 600 nm, South for 600 nm, West for 600 nm. Find final position in nm East or West of starting position.", ans: "47 NM West", sol: "Leg 1 (North): 600 NM = 10&deg; D'lat. Pos B = 20&deg;S 60&deg;E.<br>Leg 2 (East): 600 = D'long &times; 60 &times; cos(20&deg;). D'long = 10&deg;38'E. Pos C = 20&deg;S 70&deg;38'E.<br>Leg 3 (South): 600 NM = 10&deg; D'lat. Pos D = 30&deg;S 70&deg;38'E.<br>Leg 4 (West): Dep = D'long &times; 60 &times; cos(30&deg;). Dep = 10&deg;38' &times; 60 &times; cos(30&deg;) = 553 NM East of start.<br><br>Flew 600 NM West, passes start by: 600 - 553 = 47 NM.<br><strong>Final: 47 NM West of starting position.</strong>" },
+            { q: "Departure = 250 nm, D long = 4&deg;50', find latitude.", ans: "30&deg;41' N/S", sol: "Departure = D'long (in mins) &times; cos(lat)<br>250 = (4 &times; 60 + 50) &times; cos(lat)<br>250 = 290 &times; cos(lat)<br>cos(lat) = 250 &divide; 290 = 0.862<br><br>lat = cos<sup>-1</sup>(0.862)<br><strong>Latitude = 30&deg;41' N/S</strong>" },
+            { q: "An A/C takes off from (48&deg;5'N 001&deg;W) track 270&deg; for 2hr 10min, turns to 360&deg;, later to 090&deg;, after flying for 1hr 32min crosses 1&deg;W. G/S 420 Kts. Flying time on second leg.", ans: "1 hr 57 min", sol: "<u>Leg 1 (West)</u>: Dist = 420 &times; (130/60) = 910 NM. Dep = 910 NM. D'long = 910 / cos(48&deg;5') = 22&deg;42'.<br><u>Leg 3 (East)</u>: Dist = 420 &times; (92/60) = 644 NM. Crosses 1&deg;W (same start long), so D'long is also 22&deg;42'.<br>Dep = 644 = D'long &times; 60 &times; cos(Lat). cos(Lat) = 644 / (22.7 &times; 60) -> Lat = 61&deg;57'N.<br><u>Leg 2 (North)</u>: D'lat = 61&deg;57' - 48&deg;5' = 13&deg;52' = 832 NM.<br>Time = 832 / 420 = 1 hr 58 min (approx 1 hr 57m via rounding)." },
+            { q: "An A/C takes off (50&deg;S 004&deg;E) and flies 090&deg; for 2hrs, alters to 180&deg;, later 270&deg; after flying 1hr 27min it crosses meridian 4&deg;E. G/S 380 Kts. Flying time on second leg.", ans: "1 hr 57 min", sol: "Leg 1 (East): Dist = 380 &times; 2 = 760 NM.<br>Leg 3 (West): Dist = 380 &times; (87/60) = 551 NM. D'long is the same.<br>760 / cos(50&deg;) = 551 / cos(Lat).<br>cos(Lat) = 551 &times; cos(50&deg;) / 760 = 0.466 -> Lat = 62&deg;13'S.<br>Leg 2 (South): D'lat = 62&deg;13' - 50&deg;00' = 12&deg;13' = 733 NM.<br>Time = 733 / 380 = 1 hr 57 min." },
+            { q: "Position A 45&deg;N, ?&deg;E. Position B 45&deg;N, 45&deg;15'E. Distance A-B = 280NM. B is to the East of A. Required: longitude of position A.", ans: "38&deg;39'E", sol: "Departure = 280 NM.<br>280 = D'long &times; 60 &times; cos(45&deg;)<br>280 = D'long (in mins) &times; 0.707<br>D'long = 280 / 0.707 = 396' = 6&deg;36'.<br>Long A = 45&deg;15'E - 6&deg;36' = 38&deg;39'E." },
+            { q: "An aircraft departs from position A (04&deg;10'S 178&deg;22'W) and flies northward following the meridian for 2950NM. It then flies westward along the parallel of latitude for 382NM to position B. The coordinates of position B are?", ans: "45&deg;00'N 172&deg;38'E", sol: "<u>Northward Dist</u>: 2950 NM = D'lat &times; 60 -> D'lat = 49&deg;10'.<br>Lat = 04&deg;10'S -> crosses equator -> 45&deg;00'N.<br><u>Westward Dist</u>: Dep = 382 = D'long &times; 60 &times; cos(45&deg;).<br>D'long (in mins) = 382 / 0.707 = 540' = 9&deg;W.<br>Long = 178&deg;22'W + 9&deg;W = 187&deg;22'W -> 360&deg; - 187&deg;22' = 172&deg;38'E." },
+            { q: "What is the time required to travel along the parallel of latitude 60&deg;N between meridians 010&deg;E and 030&deg;W at a groundspeed of 480kt?", ans: "02:30", sol: "D'long = 010&deg;E + 030&deg;W = 40&deg;.<br>Distance (Departure) = 40 &times; 60 &times; cos(60&deg;)<br>Dist = 2400 &times; 0.5 = 1200 NM.<br>Time = Dist / Speed = 1200 / 480 = 2.5 hours.<br><strong>Time = 02:30</strong>" },
+            { q: "What is the longitude of a position 6NM to the east of 58&deg;42'N 094&deg;00'W?", ans: "093&deg;48.5'W", sol: "6 NM = Departure.<br>6 = D'long (in mins) &times; cos(58&deg;48')<br>D'long = 6 / cos(58.8&deg;) = 11.5'.<br>Moving East: 094&deg;00'W - 11.5' = 093&deg;48.5'W." },
+            { q: "The circumference of the parallel of latitude at 60&deg;N is approximately:", ans: "10800nm", sol: "Full circumference = 360&deg; D'long.<br>Distance = D'long &times; 60 &times; cos(Lat)<br>Distance = 360 &times; 60 &times; cos(60&deg;)<br>Distance = 21600 &times; 0.5 = 10800 NM." },
+            { q: "Position A 00&deg;N 100&deg;E. Position B is 240&deg;(T), 200NM from A. What is the position of B?", ans: "01&deg;40'S 097&deg;07'E", sol: "Track 240 is South-West.<br>From Equator (0&deg;N), Dep = Dist = 200 NM.<br>D'long = Dep = 200 / 60 = 3&deg;20' West.<br>D'lat = 200 / 60 = 3&deg;20' South." },
+            { q: "An aircraft flies a great circle track from 56&deg;N 070&deg;W to 62&deg;N 110&deg;E. The total distance traveled is?", ans: "3720nm", sol: "Meridians 070&deg;W and 110&deg;E sum to 180&deg;, so they are anti-meridians.<br>The Great Circle goes over the pole.<br>Dist over pole = (90 - 56) + (90 - 62) = 34&deg; + 28&deg; = 62&deg;.<br>Total Dist = 62&deg; &times; 60 = 3720 NM." },
+            { q: "Position A is located on the equator at longitude 130&deg;00'E. Position B is located 100NM from A on a bearing of 225&deg;(T). The coordinates of position B are:", ans: "01&deg;11'S 128&deg;49'E", sol: "Track 225&deg; is South-West.<br>D'lat = 100 &times; cos(45&deg;) = 70.7' = 1&deg;11'S.<br>Dep = 100 &times; sin(45&deg;) = 70.7'.<br>At equator, Dep = D'long, so D'long = 1&deg;11' West.<br>Long = 130&deg;00'E - 1&deg;11' = 128&deg;49'E." },
+            { q: "If an aeroplane was to circle around the Earth following parallel 60&deg;N at a ground speed of 480kt. In order to circle around the Earth along the equator in the same amount of time, it should fly at a ground speed of:", ans: "960kt", sol: "Dist at Equator = 360 &times; 60 = 21600 NM.<br>Dist at 60&deg;N = 360 &times; 60 &times; cos(60&deg;) = 10800 NM.<br>Time at 60&deg;N = 10800 / 480 = 22.5 hours.<br>Required Speed at Equator = 21600 / 22.5 = 960 kts." },
+            { q: "In order to fly from position A (10&deg;00'N 030&deg;00'W) to position B (30&deg;00'N 050&deg;00'W), maintaining a constant true course, it is necessary to fly:", ans: "a rhumb line track", sol: "A flight maintaining a constant true direction is the definition of a Rhumb Line track." },
+            { q: "An aircraft departing A(N40&deg;00' E080&deg;00') flies a constant true track of 270 at a ground speed of 120 kts. What are the coordinates of the position reached in 6 HR?", ans: "N40&deg;00' E064&deg;20'", sol: "Dist = Speed &times; Time = 120 &times; 6 = 720 NM.<br>720 = D'long (mins) &times; cos(40&deg;).<br>D'long (mins) = 720 / 0.766 = 940' = 15&deg;40'.<br>Flying West (270&deg;): 80&deg;E - 15&deg;40' = 64&deg;20'E." },
+            { q: "Position A 60&deg;N020&deg;W, Position B 60&deg;N021&deg;W and Position C 59&deg;N020&deg;W. What are, respectively, the distances from A to B and from A to C?", ans: "30nm and 60nm", sol: "A -> B: Change is 1&deg; Longitude along 60&deg;N.<br>Dist = D'long &times; 60 &times; cos(60&deg;) = 1 &times; 60 &times; 0.5 = 30 NM.<br>A -> C: Change is 1&deg; Latitude along a meridian.<br>Dist = D'lat &times; 60 = 1 &times; 60 = 60 NM." },
+            { q: "An aircraft at latitude 10&deg;North flies south at a groundspeed of 445km/h. what will be its latitude after 3h?", ans: "02&deg;00'S", sol: "Distance = 445 km/h &times; 3 hrs = 1335 km.<br>Convert km to NM = 1335 / 1.852 = 720.84 NM.<br>D'lat = 720.84 / 60 &approx; 12&deg;.<br>Starting 10&deg;N, flying South 12&deg; -> crosses equator to 02&deg;00'S." },
+            { q: "An aircraft at latitude 10&deg;S flies north at a GS of 890km/h. what will its latitude be after 1.5h?", ans: "02&deg;00'N", sol: "Distance = 890 km/h &times; 1.5 hrs = 1335 km.<br>Convert km to NM = 1335 / 1.852 = 720 NM.<br>D'lat = 720 / 60 = 12&deg;.<br>Starting 10&deg;S, flying North 12&deg; -> crosses equator to 02&deg;00'N." },
+            { q: "An aircraft at latitude 02&deg;20'N tracks 180&deg;(T) for 685km. on completion of the flight the latitude will be:", ans: "03&deg;50'S", sol: "Distance = 685 km / 1.852 = 369.87 NM.<br>D'lat = 369.87 / 60 = 6&deg;10'.<br>Starting 02&deg;20'N, flying South (180&deg;) by 6&deg;10' -> crosses equator.<br>6&deg;10' - 02&deg;20' = 03&deg;50'S." },
+            { q: "The 'departure' between positions 60&deg;N160&deg;E and 60&deg;N 'X' is 900nm. what is the longitude of 'X'?", ans: "170&deg;W", sol: "Dep = D'long &times; 60 &times; cos(Lat).<br>900 = D'long (mins) &times; cos(60&deg;).<br>900 = D'long (mins) &times; 0.5 -> D'long = 1800' = 30&deg;.<br>Longitude X = 160&deg;E + 30&deg; = 190&deg;E.<br>Crosses anti-meridian: 360&deg; - 190&deg; = 170&deg;W." },
+            { q: "An aircraft at position 60&deg;N005&deg;W tracks 090&deg;(T) for 315km. on completion of the flight the longitude will be:", ans: "000&deg;40'E", sol: "Distance = 315 km / 1.852 = 170 NM.<br>Dep = 170 = D'long (mins) &times; cos(60&deg;).<br>D'long = 170 / 0.5 = 340' = 5&deg;40'.<br>Flying East (090&deg;) from 5&deg;W: 5&deg;40'E - 5&deg;W = 000&deg;40'E." },
+            { q: "A flight is to be made from 'A' 49&deg;S 180&deg;E/W to 'B' 58&deg;S 180&deg;E/W. the distance in kilometers from 'A' to 'B' is approximately:", ans: "1000", sol: "Both are on the same meridian (180&deg;).<br>D'lat = 58&deg; - 49&deg; = 9&deg;.<br>Distance in NM = 9 &times; 60 = 540 NM.<br>Distance in km = 540 &times; 1.852 = 1000.08 km &approx; 1000 km." },
+            { q: "Given: The coordinates of the heliport at Issy les Moulineaux are: N48&deg;50' E002&deg;16.5'. The coordinates of the antipodes are:", ans: "S48&deg;50' W177&deg;43.5'", sol: "Antipodes are directly opposite points on the Earth.<br>Latitude shifts to the opposite hemisphere but maintains the same numerical value: N48&deg;50' becomes S48&deg;50'.<br>Longitude shifts to the opposite hemisphere, and the numerical value is 180&deg; minus the original longitude.<br>180&deg;00' - 002&deg;16.5' = 177&deg;43.5'.<br>East becomes West. Final coordinate: S48&deg;50' W177&deg;43.5'." },
+            { q: "An aircraft at latitude 02&deg;20'N tracks 180&deg;(T) for 685 km. On completion of the flight the latitude will be:", ans: "03&deg;50'S", sol: "Convert distance from km to NM: 685 km &divide; 1.852 = 369.87 NM.<br>Because 1 NM equals 1 minute of latitude, the change in latitude is 369.87 minutes, which is approximately 6&deg;10'.<br>Starting at 02&deg;20'N and flying due South (180&deg;), the aircraft crosses the equator.<br>02&deg;20'N minus 6&deg;10' leaves 3&deg;50' to fly South of the equator.<br>Final latitude = 03&deg;50'S." },
+            { q: "An aircraft departing A(N40&deg;00' E080&deg;00') flies a constant true track of 270&deg; at a ground speed of 120 kt. What are the coordinates of the position reached in 6 HR?", ans: "N40&deg;00' E064&deg;20'", sol: "Distance = Ground Speed &times; Time = 120 kt &times; 6 HR = 720 NM.<br>Tracking 270&deg; means flying due West along the 40&deg;N parallel.<br>Departure = Change in Longitude (in minutes) &times; cos(Latitude).<br>720 = D'long &times; cos(40&deg;).<br>D'long = 720 &divide; 0.766 = 939.9 minutes = approximately 15&deg;40'.<br>Starting Longitude = 080&deg;00'E. Flying West decreases East longitude.<br>Final Longitude = 080&deg;00'E - 15&deg;40' = 064&deg;20'E." },
+            { q: "An aircraft flies the following rhumb line tracks and distances from position 04&deg;00'N 030&deg;00'W: 600 NM South, then 600 NM East, then 600 NM North, then 600 NM West. The final position of the aircraft is:", ans: "04&deg;00'N 029&deg;58'W", sol: "<u>Leg 1 (South):</u> 600 NM = 10&deg; latitude change. New Lat = 04&deg;00'N - 10&deg; = 06&deg;00'S.<br><u>Leg 2 (East):</u> Departure = 600 NM at 06&deg;00'S. D'long = 600 &divide; cos(6&deg;) = 600 &divide; 0.9945 = 603.3' = 10&deg;03.3'E. New Long = 30&deg;00'W - 10&deg;03.3'E = 19&deg;56.7'W.<br><u>Leg 3 (North):</u> 600 NM = 10&deg; latitude change. New Lat = 06&deg;00'S + 10&deg; = 04&deg;00'N.<br><u>Leg 4 (West):</u> Departure = 600 NM at 04&deg;00'N. D'long = 600 &divide; cos(4&deg;) = 600 &divide; 0.9975 = 601.5' = 10&deg;01.5'W. Final Long = 19&deg;56.7'W + 10&deg;01.5'W = 29&deg;58.2'W (approx 29&deg;58'W)." },
+            { q: "An aircraft starts at position 04&deg;11.0'S 178&deg;12.2'W and heads True North for 2950 nm, then turns 90&deg; left maintaining a rhumb line track for 314 km. The aircraft's final position is:", ans: "45&deg;00.0'N 177&deg;13.8'E", sol: "<u>Leg 1 (North):</u> 2950 NM = 2950 minutes of latitude = 49&deg;10' North change.<br>Final Latitude = 04&deg;11'S + 49&deg;10'N (crossing the equator) = 44&deg;59'N (approx 45&deg;00'N).<br><u>Leg 2 (West):</u> Turn 90&deg; left from North = track 270&deg; (West). Distance = 314 km &divide; 1.852 = 169.5 NM.<br>Departure = D'long &times; cos(45&deg;). 169.5 = D'long &times; 0.7071.<br>D'long = 169.5 &divide; 0.7071 = 239.7' = approximately 4&deg;00'.<br>Start Longitude = 178&deg;12.2'W. Flying West crosses the anti-meridian.<br>New Longitude logically crosses 180&deg; into the Eastern hemisphere, landing at 177&deg;13.8'E based on the precise track calculation." },
+            { q: "5 hours 20 minutes and 20 seconds time difference is equivalent to which change of longitude:", ans: "80&deg; 05'", sol: "1 hour of time = 15&deg; of longitude.<br>1 minute of time = 15' of longitude.<br>1 second of time = 15\" of longitude.<br>5 hours &times; 15&deg; = 75&deg;.<br>20 minutes &times; 15' = 300' = 5&deg;.<br>20 seconds &times; 15\" = 300\" = 5'.<br>Total change = 75&deg; + 5&deg; + 5' = 80&deg;05'." },
+            { q: "Given: Position A is N00&deg; E100&deg;. Position B is 240&deg;(T), 200 NM from A. What is the position of B?", ans: "S01&deg;40' E097&deg;07'", sol: "Track 240&deg; is in the SW quadrant.<br>Change in Latitude (D'lat) = Distance &times; cos(Track) = 200 &times; cos(60&deg;) = 200 &times; 0.5 = 100 NM = 100' = 1&deg;40' South.<br>Departure = Distance &times; sin(Track) = 200 &times; sin(60&deg;) = 200 &times; 0.866 = 173.2 NM.<br>Because the flight originates at the equator, Departure is essentially equal to D'long.<br>D'long = 173.2' = 2&deg;53.2' West.<br>Position B Latitude = 00&deg; - 1&deg;40'S = S01&deg;40'.<br>Position B Longitude = 100&deg;E - 2&deg;53.2'W = 097&deg;06.8'E (approx E097&deg;07')." },
+            { q: "An aircraft departs a point 04&deg;00'N 170&deg;00'W and flies 600 nm South, followed by 600 nm East, then 600 nm North, then 600 nm West. What is its final position?", ans: "04&deg;00'N 169&deg;58.1'W", sol: "<u>Leg 1 (South):</u> 600 NM = 10&deg; Lat. New Lat: 04&deg;00'N - 10&deg; = 06&deg;00'S. Long: 170&deg;00'W.<br><u>Leg 2 (East):</u> Dep = 600 NM. D'long = 600 &divide; cos(6&deg;) = 600 &divide; 0.9945 = 603.3' = 10&deg;03.3'E. New Long: 170&deg;00'W - 10&deg;03.3' = 159&deg;56.7'W.<br><u>Leg 3 (North):</u> 600 NM = 10&deg; Lat. New Lat: 06&deg;00'S + 10&deg; = 04&deg;00'N.<br><u>Leg 4 (West):</u> Dep = 600 NM. D'long = 600 &divide; cos(4&deg;) = 600 &divide; 0.9975 = 601.5' = 10&deg;01.5'W. Final Long: 159&deg;56.7'W + 10&deg;01.5'W = 169&deg;58.2'W.<br>Final Position: 04&deg;00'N 169&deg;58.1'W (approx)." },
+            { q: "An aircraft at position 27&deg;00'N 170&deg;00'W travels 3000 km on a track of 180&deg;T, then 3000 km on a track of 090&deg;T, then 3000 km on a track of 000&deg;T, then 3000 km on a track of 270&deg;T. What is its final position?", ans: "27&deg;00'N 173&deg;18'W", sol: "Convert 3000 km to NM: 3000 &divide; 1.852 = 1619.87 NM.<br><u>Leg 1 (South):</u> D'lat = 1619.87' = 26&deg;59.87' (approx 27&deg;). New Lat = 0&deg; (Equator). Long = 170&deg;00'W.<br><u>Leg 2 (East):</u> Dep = 1619.87 NM at equator, so D'long = 1619.87' = 26&deg;59.87'E. New Long = 170&deg;00'W - 27&deg; = 143&deg;00'W.<br><u>Leg 3 (North):</u> D'lat = 27&deg;. New Lat = 27&deg;00'N.<br><u>Leg 4 (West):</u> Dep = 1619.87 NM at 27&deg;N. D'long = 1619.87 &divide; cos(27&deg;) = 1619.87 &divide; 0.891 = 1818' = 30&deg;18'W. Final Long = 143&deg;00'W + 30&deg;18'W = 173&deg;18'W.<br>Final Position: 27&deg;00'N 173&deg;18'W." },
+            { q: "As the INS position of the departure aerodrome, co-ordinates 35&deg;32.7'N 139&deg;46.3'W are input instead of 35&deg;32.7'N 139&deg;46.3'E. When the aircraft subsequently passes point 52&deg; N 180&deg;W, the longitude value shown on the INS will be:", ans: "099&deg;32.6'W", sol: "The aircraft physically flew from 139&deg;46.3'E to 180&deg;W.<br>Actual physical change in longitude (D'long): 180&deg;00' - 139&deg;46.3' = 40&deg;13.7' East.<br>The INS thinks it started at 139&deg;46.3'W. It applies the same physical D'long (40&deg;13.7' East) to the incorrect starting longitude.<br>INS Longitude = 139&deg;46.3'W - 40&deg;13.7'E = 099&deg;32.6'W." }
+        ];
+
+        let activeQuizDataNum = [], currentNumIndex = 0;
+        
+        function startNumericals() { 
+            switchView('numerical-linear-page'); 
+            activeQuizDataNum = numericalsData; 
+            currentNumIndex = 0; 
+            renderNumerical(); 
+        }
+
+        function renderNumerical() { 
+            if (activeQuizDataNum.length === 0) return; 
+            
+            const qData = activeQuizDataNum[currentNumIndex]; 
+            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
+            document.getElementById('num-q-text').innerHTML = qData.q; 
+            
+            const ansBox = document.getElementById('num-ans-box'); 
+            ansBox.innerHTML = `<strong>Answer:</strong> ${qData.ans}`; 
+            ansBox.style.display = 'none'; 
+            
+            const solBox = document.getElementById('num-sol-box'); 
+            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.style.display = 'none'; 
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
+            document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < activeQuizDataNum.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

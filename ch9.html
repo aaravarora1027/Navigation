@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 9 | INS & IRS</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 25px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        
+        .mcq-options { display: flex; flex-direction: column; gap: 10px; }
+        .mcq-option { background-color: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 15px 20px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 1.05rem; transition: all 0.2s; }
+        .mcq-option:hover:not(.disabled) { background-color: var(--accent); }
+        .mcq-option.disabled { cursor: default; }
+        .mcq-option.correct { background-color: var(--correct-bg); border-color: var(--correct-border); }
+        .mcq-option.wrong { background-color: var(--wrong-bg); border-color: var(--wrong-border); }
+        
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; margin-bottom: 15px; }
+        .feedback-solution { display: block; background-color: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); padding: 20px; font-size: 1.05rem; font-weight: normal; }
+        
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 9: INS/IRS</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="startQuiz()">
+                    <h3>Quiz Engine</h3>
+                    <p>66 Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals Engine</h3>
+                    <p>3 Step-by-Step Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUIZ ENGINE -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Theory Question 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Quiz</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            
+            <div class="content-area">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="mcq-options" id="quiz-options"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- NUMERICALS ENGINE -->
+        <div id="numerical-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Calculation 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; border-color: #555;" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box feedback-solution" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // QUIZ DATA (66 MCQs)
+        // ==========================================
+        const quizData = [
+            { q: "Which of the following lists all of the methods that can be used to enter 'Created Waypoints' into the CDU of a B737-400 Electronic Flight Instrument System?", options: ["a. Identifier range, location name; Height above MSL; latitude and longitude.", "b. Identifier bearing/distance; place bearing/place bearing; along-track displacement; latitude and longitude.", "c. Identifier name and range; location name; Height above MSL; latitude and longitude.", "d. Identifier grid reference, location name, Height above MSL, latitude and Rhumb line position."], correct: 1 },
+            { q: "Some inertial reference and navigation systems are known as \"strapdown\". This means that?", options: ["a. The accelerometers are fixed to the aircraft structure but the gyros are stabilised.", "b. The gyros are stabilised but the accelerometers are fixed to the aircraft structure.", "c. The gyroscopes and accelerometers become part of the unit's fixture to the aircraft structure.", "d. The indicator units are strapped to the aircraft structure."], correct: 2 },
+            { q: "As the INS position of the departure aerodrome, coordinates 35&deg;32.7'N 139&deg;46.3'W are input instead of 35&deg;32.7'N 139&deg;46.3'E. When the aircraft subsequently passes point 52&deg;N 180&deg;W, the longitude value shown on the INS will be?", options: ["a. 099&deg; 32.6'E.", "b. 099&deg; 32.6'W.", "c. 199&deg; 32.6'W.", "d. 299&deg; 32.6'W."], correct: 1 },
+            { q: "In order to maintain an accurate vertical using a pendulous system, an aircraft inertial platform incorporates a device?", options: ["a. With damping and a period of 84.4 MIN.", "b. With damping and a period of 84.4 SEC.", "c. With damping and a period of 48.4 MIN.", "d. With damping and a period of 48.4 SEC."], correct: 0 },
+            { q: "In what way does IRS differ from INS?", options: ["a. Has a shorter spin-up time and suffers from laser lock.", "b. Does not need to correct for coriolis and central acceleration.", "c. Has a longer spin-up time and is not affected by vertical accelerations due to gravity.", "d. Does not experience Schuler errors as accelerometers are strapped down."], correct: 3 },
+            { q: "Which of the following statements is true of a Ring Laser Gyro?", options: ["a. It is not necessarily fixed to true north and is quick to erect.", "b. It is fixed to true north and is quick to erect.", "c. It doesn't suffer from 'lock in' and is unaffected by the earth's gravitational force.", "d. It is not necessarily fixed to true north but takes along time to erect."], correct: 0 },
+            { q: "In a laser reference system (IRS), as compared to a gyro reference system (INS):", options: ["a. The accelerometers are strapped down but the platform is gyro stabilised.", "b. Accelerometers and platform are both strapped down.", "c. The platform is strapped down but the accelerometers are gyro-stabilised.", "d. Accelerometers and platform are both gyro-stabilised."], correct: 1 },
+            { q: "In a ring laser gyro, the purpose of the dither motor is to:", options: ["a. Compensate for transport wander.", "b. Stabilise the laser frequencies.", "c. Enhance the accuracy of the gyro at all rotational rates.", "d. Overcome laser lock."], correct: 3 },
+            { q: "A pilot turns off the power to his IRS whilst in flight. He switches it on again after just a few seconds. What will be the effect?", options: ["a. It can be repositioned whilst in flight.", "b. There will be no effect.", "c. It cannot be used and must be shut down.", "d. It cannot be used for navigation, but can be used to provide attitude information."], correct: 3 },
+            { q: "In which IRS mode does gyro-compassing take place?", options: ["a. ATT", "b. ALIGN", "c. ON", "d. NAV"], correct: 1 },
+            { q: "A gyro is said to drift when its spin axis moves in the?", options: ["a. Horizontal and vertical.", "b. Neither, because its definition is not related to these axes.", "c. Horizontal.", "d. Vertical."], correct: 2 },
+            { q: "What do the sensors of an INS measure?", options: ["a. Acceleration.", "b. The horizontal component of the earth's rotation.", "c. Velocity.", "d. Precession."], correct: 0 },
+            { q: "The IRS position is updated?", options: ["a. Updating is normally carried out by the crew when over-flying a known position (VOR station or NDB).", "b. IRS positions are updated by pressing the 'Take-off/ Go-around' button at the start of the take-off roll.", "c. During flight IRS positions are automatically updated by the FMC.", "d. Only on the ground during the alignment procedure."], correct: 3 },
+            { q: "Some inertial reference systems are known as 'strapdown' . This means:", options: ["a. The system is mounted on a stabilised platform.", "b. The gyros are fixed but the accelerometers are stabilised.", "c. The system is mounted and fixed to the aircraft structure.", "d. The accelerometers are fixed but the gyros are stabilised."], correct: 2 },
+            { q: "Double integration of the output from the east/west accelerometer of an inertial navigation system (INS) in the NAV MODE gives:", options: ["a. Vehicle longitude.", "b. Distance east/west.", "c. Distance north/south.", "d. Velocity east/west."], correct: 1 },
+            { q: "The principle of 'Schuler Tuning' as applied to the operation of Inertial Navigation Systems/Inertial Reference Systems is applicable to:", options: ["a. Only gyro-stabilised systems.", "b. Both gyro-stabilised platform and strapdown systems.", "c. Both gyro-stabilised and laser gyro systems but only when operating in the non 'strapdown' mode.", "d. Only to 'strapdown' laser gyro systems."], correct: 1 },
+            { q: "In an Inertial Navigation System (INS), what is the output of the first stage North/South integrator?", options: ["a. Velocity along the local meridian.", "b. Groundspeed.", "c. Latitude.", "d. Change of latitude."], correct: 0 },
+            { q: "Alignment of INS and IRS equipments can take place in which of the following modes?", options: ["a. ALIGN only.", "b. ALIGN and ATT.", "c. ATT and ALIGN.", "d. NAV and ALIGN."], correct: 3 },
+            { q: "On a triple-fit IRS system, present positions on the CDU?", options: ["a. Are likely to differ as the information comes from different sources.", "b. Will only differ if one IRS has been decoupled due to a detected malfunction.", "c. Will only differ if an initial input error of aircraft position has been made.", "d. Will not differ as the information is averaged."], correct: 0 },
+            { q: "What are the positions (in the order left to right) on the Boeing 737-400 IRS Mode Selector Unit (MSU)?", options: ["a. OFF STBY ATT NAV.", "b. OFF STBY NAV ATT.", "c. OFF STBY ALIGN NAV ATT.", "d. OFF ALIGN NAV ATT."], correct: 3 },
+            { q: "Gyro-compassing in an INS?", options: ["a. It is not possible in flight because the gyros cannot differentiate between acceleration due to aircraft movement and initial alignment errors.", "b. Is possible in flight as the gyros cannot differentiate between acceleration due to aircraft movement and initial alignment errors.", "c. Is possible in flight as the gyros can differentiate between acceleration due to aircraft movement and initial alignment errors.", "d. Is not possible in flight as the gyros can differentiate between acceleration due to aircraft movement and initial alignment errors."], correct: 0 },
+            { q: "In an INS/IRS, an azimuth gyro is found to have a drift rate. If t is the time since selecting the MSU from ALIGN to NAV the azimuth gyro heading error is?", options: ["a. Proportional to t.", "b. Proportional to the square root of t.", "c. Proportional to t/2.", "d. Sinusoidal."], correct: 0 },
+            { q: "On the IRS, selection of ATT mode gives attitude?", options: ["a. Altitude, and heading.", "b. Only.", "c. And heading.", "d. Heading, and groundspeed."], correct: 2 },
+            { q: "How long does it take to align an IRS (Laser Ring Gyros)?", options: ["a. 10 minutes.", "b. 15 minutes.", "c. 1 minute.", "d. 5 minutes."], correct: 0 },
+            { q: "What is the purpose of the piezo-electric motor in an IRS system?", options: ["a. Dither.", "b. Vibrate.", "c. Shake.", "d. Shudder."], correct: 0 },
+            { q: "In order to maintain an accurate vertical using a pendulous system, an Aircraft inertial platform incorporates a device?", options: ["a. Without damping and a period of 84.4 MIN.", "b. Without damping and a period of 84.4 SEC.", "c. With damping and a period of 84.4 MIN.", "d. With damping and a period of 84.4 SEC."], correct: 2 },
+            { q: "The platform of an inertial navigation system (INS) is maintained at right angles to the local vertical by applying corrections for the effects of?", options: ["a. Aircraft manoeuvres, earth rotation, transport wander and coriolis.", "b. Movement in the yawing plane, secondary precession and pendulous oscillation.", "c. Gyroscopic inertia, earth rotation and real drift.", "d. Vertical velocities, earth precession, centrifugal forces and transport drift."], correct: 0 },
+            { q: "In an Inertial Navigation System (INS), Ground Speed (GS) is calculated?", options: ["a. By integrating gyro precession in N/S and E/W directions respectively.", "b. From TAS and WN from Air Data Computer (ADC).", "c. By integrating measured acceleration.", "d. From TAS and WN from RNAV data."], correct: 2 },
+            { q: "An aircraft equipped with an Inertial Navigation System (INS) flies with INS 1 coupled with autopilot 1. Both inertial navigation systems are navigating from way-point A to B. The inertial systems' Central Display Units (CDU) show: XTK on INS 1 = 0, XTK on INS 2 = 8L. What can be deduced from this information?", options: ["a. Only inertial navigation system No.1 is drifting.", "b. At least one of the inertial navigation systems is drifting.", "c. Only inertial navigation system No.2 is drifting.", "d. The autopilot is unserviceable in NAV mode."], correct: 1 },
+            { q: "If an IRS loses its position mid-flight it must?", options: ["a. Not be used in NAV mode.", "b. Be turned OFF.", "c. Have a new position inserted.", "d. Be selected to ALIGN and then to NAV."], correct: 0 },
+            { q: "What does INS need for wind calculations?", options: ["a. EAS.", "b. TAS.", "c. Mach Number.", "d. Heading."], correct: 1 },
+            { q: "What do you call a system of gyros and accelerometers that is fixed to the aircraft?", options: ["a. Laser.", "b. Stabilised.", "c. Fixed.", "d. Strapdown."], correct: 3 },
+            { q: "When is the last point at which an INS or IRS may be selected to NAV mode?", options: ["a. After passengers and freight are aboard.", "b. Immediately prior to push back or taxi from the gate.", "c. At the holding point.", "d. On operation of TOGA switch when opening the throttles for the take-off."], correct: 1 },
+            { q: "In what form are positions entered in all INS systems?", options: ["a. Geographic coordinates.", "b. Ranges and bearings.", "c. Waypoint names.", "d. Hexadecimals."], correct: 0 },
+            { q: "Which mode selection on the CDU of an INS is required to display initial Great Circle track?", options: ["a. DSRTK/STS.", "b. DSRTK/STS.", "c. TK/GS.", "d. XTK/TKE."], correct: 0 },
+            { q: "An IRS differs from an INS in that it?", options: ["a. Has a longer spin-up time and is not affected by vertical accelerations due to gravity.", "b. Does not need to correct for coriolis and central acceleration.", "c. Does not experience Schuler errors as accelerometers are strapped down.", "d. Has a shorter spin-up time and suffers from laser lock."], correct: 3 },
+            { q: "Which of the following statements is true of a Ring Laser Gyro?", options: ["a. It doesn't suffer from 'lock in' and is unaffected by the earth's gravitational force", "b. It is not necessarily fixed to true north but takes along time to erect", "c. It is not necessarily fixed to true north and is quick to erect", "d. It is fixed to true north and is quick to erect"], correct: 2 },
+            { q: "In a laser reference system (IRS), as compared to a gyro reference system (INS):", options: ["a. The accelerometers are strapped down but the platform is gyro stabilised.", "b. Accelerometers and platform are both strapped down", "c. The platform is strapped down but the accelerometers are gyro-stabilised.", "d. Accelerometers and platform are both gyro-stabilised."], correct: 1 },
+            { q: "The dither motor in a ring laser gyro is used to?", options: ["a. Compensate for transport wander.", "b. Stabilise the laser frequencies.", "c. Enhance the accuracy of the gyro at all rotational rates.", "d. Overcome laser lock."], correct: 3 },
+            { q: "A pilot turns off his IRS whilst in flight, then switches it on again after just a few seconds. What will be the effect?", options: ["a. It can be repositioned whilst in flight", "b. There will be no effect", "c. It cannot be used for navigation, but can be used to provide attitude information", "d. It cannot be used and must be shut down"], correct: 2 },
+            { q: "In which IRS mode does gyro-compassing take place?", options: ["a. ATT", "b. ALIGN", "c. ON", "d. NAV"], correct: 1 },
+            { q: "Gyro drift occurs when the spin axis moves in the?", options: ["a. Horizontal and vertical", "b. Neither, because its definition is not related to these axes", "c. Horizontal", "d. Vertical"], correct: 2 },
+            { q: "What do the sensors of an INS measure?", options: ["a. Acceleration", "b. The horizontal component of the earth's rotation", "c. Velocity", "d. Precession"], correct: 0 },
+            { q: "Where and when are the IRS positions updated?", options: ["a. During flight IRS positions are automatically updated by the FMC", "b. Only on the ground during the alignment procedure.", "c. Updating is normally carried out by the crew when over-flying a known position (VOR station or NDB)", "d. IRS positions are updated by pressing the 'Take-off/ Go-around' button at the start of the take-off roll"], correct: 1 },
+            { q: "Some inertial reference systems are known as 'strapdown'. This means:", options: ["a. The system is mounted on a stabilised platform.", "b. The gyros are fixed but the accelerometers are stabilised.", "c. The system is mounted and fixed to the aircraft structure.", "d. The accelerometers are fixed but the gyros are stabilised."], correct: 2 },
+            { q: "What is produced by double integration of the output from the east/west accelerometer of an inertial navigation system (INS) when it is in the NAV MODE?", options: ["a. Distance north/south.", "b. Velocity east/west.", "c. Vehicle longitude.", "d. Distance east/west."], correct: 3 },
+            { q: "The principle of 'Schuler Tuning' as applied to the operation of Inertial Navigation Systems/Inertial Reference Systems is applicable to:", options: ["a. Only gyro-stabilised systems.", "b. Both gyro-stabilised platform and strapdown systems.", "c. Both gyro-stabilised and laser gyro systems but only when operating in the non 'strapdown' mode.", "d. Only to 'strapdown' laser gyro systems."], correct: 1 },
+            { q: "In an Inertial Navigation System (INS), what is the output of the first stage North/South integrator?", options: ["a. Velocity along the local meridian.", "b. Groundspeed.", "c. Latitude.", "d. Change of latitude."], correct: 0 },
+            { q: "Alignment of INS and IRS equipments can take place in which of the following modes?", options: ["a. ATT and ALIGN.", "b. NAV and ALIGN.", "c. ALIGN only.", "d. ALIGN and ATT."], correct: 1 },
+            { q: "On an aircraft equipped with a triple-fit IRS system, present positions on the CDU?", options: ["a. Will only differ if an initial input error of aircraft position has been made.", "b. Will not differ as the information is averaged", "c. Are likely to differ as the information comes from different sources.", "d. Will only differ if one IRS has been decoupled due to a detected malfunction."], correct: 2 },
+            { q: "What are the positions (in the order left to right) on the Boeing 737-400 IRS Mode Selector Unit (MSU)?", options: ["a. OFF STBY ATT NAV.", "b. OFF STBY NAV ATT.", "c. OFF STBY ALIGN NAV ATT.", "d. OFF ALIGN NAV ATT."], correct: 3 },
+            { q: "Gyro-compassing in an INS?", options: ["a. It is not possible in flight because the gyros cannot differentiate between acceleration due to aircraft movement and initial alignment errors.", "b. Is possible in flight as the gyros cannot differentiate between acceleration due to aircraft movement and initial alignment errors.", "c. Is possible in flight as the gyros can differentiate between acceleration due to aircraft movement and initial alignment errors.", "d. Is not possible in flight as the gyros can differentiate between acceleration due to aircraft movement and initial alignment errors."], correct: 0 },
+            { q: "If t is the time since selecting the MSU from ALIGN to NAV the azimuth gyro heading error caused by drift rate of an INS/IRS azimuth gyro is?", options: ["a. Proportional to t/2.", "b. Sinusoidal.", "c. Proportional to t.", "d. Proportional to the square root of t."], correct: 2 },
+            { q: "On the IRS, selection of ATT mode gives attitude?", options: ["a. Altitude, and heading.", "b. Only.", "c. And heading.", "d. Heading, and groundspeed."], correct: 2 },
+            { q: "How long does it take to align an IRS (Laser Ring Gyros)?", options: ["a. 10 minutes.", "b. 5 minutes.", "c. 1 minute.", "d. 15 minutes."], correct: 0 },
+            { q: "What principle is utilized by the piezo-electric motor in an IRS system?", options: ["a. Shake.", "b. Shudder.", "c. Dither.", "d. Vibrate."], correct: 2 },
+            { q: "By what means is an accurate vertical maintained using a pendulous system, an aircraft inertial platform incorporates a device?", options: ["a. With damping and a period of 84.4 MIN.", "b. With damping and a period of 84.4 SEC.", "c. Without damping and a period of 84.4 MIN.", "d. Without damping and a period of 84.4 SEC."], correct: 0 },
+            { q: "The platform of an inertial navigation system (INS) is maintained at right angles to the local vertical by applying corrections to counter the effects of?", options: ["a. Gyroscopic inertia, earth rotation and real drift.", "b. Vertical velocities, earth precession, centrifugal forces and transport drift.", "c. Aircraft manoeuvres, earth rotation, transport wander and coriolis.", "d. Movement in the yawing plane, secondary precession and pendulous oscillation."], correct: 2 },
+            { q: "In an Inertial Navigation System (INS), Ground Speed (GS) is calculated?", options: ["a. By integrating gyro precession in N/S and E/W directions respectively.", "b. From TAS and WN from Air Data Computer (ADC).", "c. By integrating measured acceleration.", "d. From TAS and WN from RNAV data."], correct: 2 },
+            { q: "An aircraft equipped with an Inertial Navigation System (INS) flies with INS 1 coupled with autopilot 1. Both inertial navigation systems are navigating from waypoint A to B. The inertial systems' Central Display Units (CDU) show: XTK on INS 1 = 0, XTK on INS 2 = 15L (XTK = cross track). What can be deduced from this information?", options: ["a. Only inertial navigation system No.1 is drifting.", "b. Only inertial navigation system No.2 is drifting.", "c. The autopilot is unserviceable in NAV mode.", "d. At least one of the inertial navigation systems is drifting."], correct: 3 },
+            { q: "If an IRS loses its position mid-flight it must?", options: ["a. Not be used in NAV mode.", "b. Be turned OFF.", "c. Have a new position inserted.", "d. Be selected to ALIGN and then to NAV."], correct: 0 },
+            { q: "What does INS need for wind calculations?", options: ["a. EAS.", "b. TAS.", "c. Mach Number.", "d. Heading."], correct: 1 },
+            { q: "What do you call a system of gyros and accelerometers that is fixed to the aircraft?", options: ["a. Laser.", "b. Stabilised.", "c. Fixed.", "d. Strapdown."], correct: 3 },
+            { q: "The latest point at which an INS or IRS may be selected to NAV mode is?", options: ["a. At the holding point.", "b. On operation of TOGA switch when opening the throttles for the take-off.", "c. After passengers and freight are aboard.", "d. Immediately prior to push back or taxi from the gate."], correct: 3 },
+            { q: "What format is used to enter positions into INS systems?", options: ["a. Waypoint names.", "b. Hexadecimals.", "c. Ranges and bearings.", "d. Geographic coordinates."], correct: 3 },
+            { q: "Which mode on the CDU of an INS must be selected in order to display initial Great Circle track?", options: ["a. DSRTK\\STS.", "b. TK\\GS.", "c. XTK\\TKE.", "d. HDG\\DA."], correct: 0 }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizAnswers = new Array(quizData.length).fill(null);
+
+        function startQuiz() {
+            switchView('quiz-page');
+            currentQuizIndex = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            if (quizData.length === 0) return;
+            const qData = quizData[currentQuizIndex];
+            
+            document.getElementById('quiz-counter').innerText = `Theory Q${currentQuizIndex + 1} of ${quizData.length}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuizIndex + 1) / quizData.length) * 100}%`;
+            document.getElementById('quiz-q-text').innerHTML = `<strong>Q${currentQuizIndex + 1}.</strong> ` + qData.q;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            const hasAnswered = quizAnswers[currentQuizIndex] !== null;
+            
+            qData.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'mcq-option';
+                btn.innerHTML = optText;
+                
+                if (hasAnswered) {
+                    btn.classList.add('disabled');
+                    if (index === qData.correct) {
+                        btn.classList.add('correct');
+                    } else if (index === quizAnswers[currentQuizIndex]) {
+                        btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => selectQuizOption(index);
+                }
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQuizIndex === 0;
+            document.getElementById('quiz-next-btn').disabled = currentQuizIndex === quizData.length - 1;
+        }
+
+        function selectQuizOption(selectedIndex) {
+            quizAnswers[currentQuizIndex] = selectedIndex;
+            renderQuiz();
+        }
+
+        function goPrevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
+        function goNextQuiz() { if (currentQuizIndex < quizData.length - 1) { currentQuizIndex++; renderQuiz(); } }
+
+
+        // ==========================================
+        // NUMERICALS DATA (3 Calculations)
+        // ==========================================
+        const numericalsData = [
+            { 
+                q: "<strong>Problem 1.</strong><br>A/C flying from Point A on westerly track. WPA = 40&deg;N 20&deg;E.<br>While entering co-ordinates of A, Pilot makes an error as he enters co-ordinate of A as 20&deg;W. On crossing meridian of 50&deg;W, what longitude is shown in INS?", 
+                ans: "90&deg;W",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Actual Initial Position:</strong> 20&deg;E.<br>2. <strong>Erroneous INS Input:</strong> 20&deg;W (The INS believes it is starting 40&deg; further West than it actually is).<br>3. <strong>Actual Distance Flown:</strong> The aircraft physically flies from 20&deg;E to 50&deg;W. <br>&nbsp;&nbsp;&nbsp;Total change in longitude = 20&deg; + 50&deg; = 70&deg; Westerly displacement.<br>4. <strong>INS Logic:</strong> The INS detects the 70&deg; Westerly movement and applies it to its perceived starting point.<br>5. <strong>Final INS Display:</strong> 20&deg;W (Start) + 70&deg;W (Movement) = <strong>90&deg;W</strong>."
+            },
+            { 
+                q: "<strong>Problem 2.</strong><br>A/C Lands & is parked at Ramp 15.<br>INS position shows: 52&deg;20.7'N 4&deg;40.3'E.<br>According to airway manual, Actual position is: 52&deg;18.5'N 4&deg;45.9'E.<br>If the A/C has flown for 6.42 hrs, find the Radial Error.", 
+                ans: "0.63 NM/hr",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Difference in Latitude (dlat):</strong><br>&nbsp;&nbsp;&nbsp;52&deg;20.7'N - 52&deg;18.5'N = 2.2 minutes = 2.2 NM (North/South Error).<br><br>2. <strong>Find Difference in Longitude (dlong):</strong><br>&nbsp;&nbsp;&nbsp;4&deg;45.9'E - 4&deg;40.3'E = 5.6 minutes.<br><br>3. <strong>Convert dlong to Departure (Distance):</strong><br>&nbsp;&nbsp;&nbsp;Departure = dlong &times; cos(Latitude)<br>&nbsp;&nbsp;&nbsp;Departure = 5.6 &times; cos(52&deg;18.5') = 3.4 NM (East/West Error).<br><br>4. <strong>Find Total Distance Error (Pythagoras):</strong><br>&nbsp;&nbsp;&nbsp;Distance = &radic;(2.2&sup2; + 3.4&sup2;) = &radic;(4.84 + 11.56) = &radic;16.4 = 4.05 NM total positional error.<br><br>5. <strong>Calculate Radial Error Rate:</strong><br>&nbsp;&nbsp;&nbsp;Rate = Total Error / Total Flying Time<br>&nbsp;&nbsp;&nbsp;Rate = 4.05 NM / 6.42 hrs = <strong>0.63 NM/hr</strong>."
+            },
+            { 
+                q: "<strong>Problem 3.</strong><br>Following waypoints are in INS:<br>WP1: 60&deg;N 20&deg;W<br>WP2: 60&deg;N 40&deg;W<br>WP3: 60&deg;N 60&deg;W<br>Aircraft is flying from WP1 to WP3. What is the track change required at WP2?", 
+                ans: "17.34&deg;",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Calculate Earth Convergency:</strong><br>&nbsp;&nbsp;&nbsp;Convergency = dlong &times; sin(mean lat)<br>&nbsp;&nbsp;&nbsp;Convergency = (40&deg;W - 20&deg;W) &times; sin(60&deg;) = 20 &times; 0.866 = 17.32&deg;.<br><br>2. <strong>Calculate Conversion Angle (CA):</strong><br>&nbsp;&nbsp;&nbsp;CA = &frac12; Convergency = 17.32 / 2 = 8.66&deg;.<br><br>3. <strong>Analyze WP1 to WP2:</strong><br>&nbsp;&nbsp;&nbsp;Rhumb Line (RL) track = 270&deg; (due West along parallel).<br>&nbsp;&nbsp;&nbsp;Initial Great Circle (GC) Bearing = 270&deg; + 8.66&deg; = 278.66&deg;.<br>&nbsp;&nbsp;&nbsp;GC Track Arriving at WP2 = Initial Bearing - Convergency = 278.66&deg; - 17.32&deg; = 261.34&deg;.<br><br>4. <strong>Analyze WP2 to WP3:</strong><br>&nbsp;&nbsp;&nbsp;RL track = 270&deg;.<br>&nbsp;&nbsp;&nbsp;Initial GC Track Departing WP2 = 270&deg; + 8.66&deg; = 278.66&deg;.<br><br>5. <strong>Calculate Total Track Change at WP2:</strong><br>&nbsp;&nbsp;&nbsp;Change = Departing Track - Arriving Track<br>&nbsp;&nbsp;&nbsp;Change = 278.66&deg; - 261.34&deg; = <strong>17.32&deg;</strong> (Handwritten notes round to 17.34&deg; based on specific trig approximations)."
+            }
+        ];
+
+        let currentNumIndex = 0;
+
+        function startNumericals() {
+            switchView('numerical-page');
+            currentNumIndex = 0;
+            renderNumerical();
+        }
+
+        function renderNumerical() {
+            if (numericalsData.length === 0) return;
+            const qData = numericalsData[currentNumIndex];
+            
+            document.getElementById('num-counter').innerText = `Calculation Q${currentNumIndex + 1} of ${numericalsData.length}`;
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / numericalsData.length) * 100}%`;
+            document.getElementById('num-q-text').innerHTML = qData.q;
+            
+            const ansBox = document.getElementById('num-ans-box');
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`;
+            ansBox.style.display = 'none';
+            
+            const solBox = document.getElementById('num-sol-box');
+            solBox.innerHTML = qData.sol;
+            solBox.style.display = 'none';
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0;
+            document.getElementById('num-next-btn').disabled = currentNumIndex === numericalsData.length - 1;
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

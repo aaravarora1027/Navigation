@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 3 | Air Navigation</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        /* QUIZ & NUMERICALS STYLING */
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
+        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .option-btn:disabled { cursor: default; }
+        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
+        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
+        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        #finish-screen { text-align: center; padding-top: 40px; }
+        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
+        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 3: Convergency</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="initQuiz()">
+                    <h3>Quiz</h3>
+                    <p>12 Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals</h3>
+                    <p>33 Calculation Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Question 1 of X</h2>
+                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="options-grid" id="quiz-options-container"></div>
+                <div id="quiz-feedback-box" class="feedback-box"></div>
+            </div>
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
+            <div id="finish-screen" style="display: block;">
+                <h1>Quiz Complete!</h1>
+                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="numerical-linear-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Numerical 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // SPA NAVIGATION LOGIC
+        // ==========================================
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // DATA BANK: MCQs (CHAPTER 3)
+        // ==========================================
+        const quizData = [ 
+            { q: "What is the standard formula for convergency?", options: { a: "dlat x cos mean latitude", b: "dlat x sin mean latitude", c: "dlong x sin mean latitude" }, ans: "c" },
+            { q: "The average true course of the great circle is 100&deg;. The true course of the rhumb line at point A is:", options: { a: "100&deg;", b: "104&deg;", c: "107&deg;" }, ans: "a" },
+            { q: "A great circle track joins position A (59&deg;S 141&deg;W) and B (61&deg;S 148&deg;W). What is the difference between the great circle track at A and B?", options: { a: "it increases by 6&deg;", b: "it decreases by 6&deg;", c: "it increases by 3&deg;", d: "it decreases by 3&deg;" }, ans: "a" },
+            { q: "Radio bearings:", options: { a: "are Rhumb lines", b: "cut all meridians at the same angle", c: "are Great circles", d: "are lines of fixed direction" }, ans: "c" },
+            { q: "A Parallel of Latitude is a:", options: { a: "Great circle", b: "Rhumb line", c: "Small circle", d: "Meridian of tangency" }, ans: "b" },
+            { q: "Generally what line lies closer to the pole?", options: { a: "Rhumb line", b: "Orthodromic line", c: "Equator", d: "The rhumb line or great circle depending on the chart" }, ans: "b" },
+            { q: "An aircraft is following the 45&deg;N parallel of latitude. The track followed is a:", options: { a: "constant-heading track", b: "rhumb line", c: "great circle", d: "constant-drift track" }, ans: "b" },
+            { q: "In which occasions does the rhumb line track and the great circle track coincide on the surface of the Earth?", options: { a: "On East-West tracks in polar areas", b: "On high latitude tracks directly East-West", c: "On East-West tracks in the northern hemisphere north of the magnetic equator", d: "On tracks directly North-South and on East-West tracks along the Equator" }, ans: "d" },
+            { q: "When flying on a westerly great circle track in the Southern Hemisphere you will:", options: { a: "fly a spiral and finally end up at the south pole", b: "experience an increase in the value of true track", c: "always have the rhumb line track to the left", d: "experience a decrease in the value of true track" }, ans: "b" },
+            { q: "How many small circles can be drawn between any two points on a sphere?", options: { a: "one", b: "two", c: "unlimited", d: "none" }, ans: "c" },
+            { q: "In order to fly from position A (10&deg;00'N, 030&deg;00'W) to position B (30&deg;00'N, 050&deg;00'W), maintaining a constant true course, it is necessary to fly:", options: { a: "a great circle track", b: "a rhumb line track", c: "a polar stereographic track", d: "a direct track" }, ans: "b" },
+            { q: "Parallels of latitude, except the equator are:", options: { a: "Great circles", b: "Rhumb Lines (since they cut meridians at constant angles)", c: "Both", d: "Neither" }, ans: "b" }
+        ];
+
+        let activeQuizData = [], userAnswers = [], currentQIndex = 0;
+        
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        function initQuiz() { 
+            switchView('quiz-page');
+            activeQuizData = JSON.parse(JSON.stringify(quizData)); 
+            shuffleArray(activeQuizData); 
+            activeQuizData.forEach(q => { 
+                let optionsArr = Object.entries(q.options).map(([key, val]) => ({ key, val })); 
+                shuffleArray(optionsArr); 
+                q.shuffledOptions = optionsArr; 
+            }); 
+            userAnswers = new Array(activeQuizData.length).fill(null); 
+            currentQIndex = 0; 
+            renderQuestion(); 
+        }
+
+        function updateScore() { 
+            let currentScore = 0; 
+            userAnswers.forEach((ans, index) => { 
+                if (ans === activeQuizData[index].ans) { currentScore++; } 
+            }); 
+            document.getElementById('quiz-score-display').textContent = currentScore; 
+            return currentScore; 
+        }
+
+        function renderQuestion() { 
+            if(activeQuizData.length === 0) return;
+            const qData = activeQuizData[currentQIndex]; 
+            const selectedAns = userAnswers[currentQIndex]; 
+            
+            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+            document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
+            document.getElementById('quiz-q-text').innerHTML = qData.q; 
+            updateScore(); 
+            
+            const optionsContainer = document.getElementById('quiz-options-container'); 
+            optionsContainer.innerHTML = ''; 
+            qData.shuffledOptions.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = 'option-btn'; 
+                btn.id = `btn-${opt.key}`; 
+                btn.innerHTML = opt.val; 
+                
+                if (selectedAns !== null) { 
+                    btn.disabled = true; 
+                    if (opt.key === qData.ans) { 
+                        btn.classList.add('correct-ans'); 
+                    } else if (opt.key === selectedAns && selectedAns !== qData.ans) { 
+                        btn.classList.add('wrong-ans'); 
+                    } 
+                } else { 
+                    btn.onclick = () => { 
+                        userAnswers[currentQIndex] = opt.key; 
+                        renderQuestion(); 
+                    }; 
+                } 
+                optionsContainer.appendChild(btn); 
+            }); 
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box'); 
+            feedbackBox.className = 'feedback-box'; 
+            if (selectedAns !== null) { 
+                if (selectedAns === qData.ans) { 
+                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.classList.add('feedback-correct'); 
+                } else { 
+                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.classList.add('feedback-wrong'); 
+                } 
+            } else {
+                feedbackBox.style.display = 'none';
+            }
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
+            const nextBtn = document.getElementById('quiz-next-btn'); 
+            if (selectedAns === null) { 
+                nextBtn.disabled = true; 
+                nextBtn.textContent = "Next"; 
+            } else { 
+                nextBtn.disabled = false; 
+                nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; 
+            } 
+        }
+
+        function goPrevQuiz() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+        function goNextQuiz() { 
+            if (currentQIndex < activeQuizData.length - 1) { 
+                currentQIndex++; renderQuestion(); 
+            } else { 
+                switchView('quiz-finish-screen'); 
+                document.getElementById('final-score').textContent = updateScore(); 
+                document.getElementById('total-questions').textContent = activeQuizData.length; 
+            } 
+        }
+
+        // ==========================================
+        // DATA BANK: NUMERICALS (CHAPTER 3)
+        // ==========================================
+        const numericalsData = [
+            // --- BOOK QUESTIONS ---
+            { q: "For northern hemisphere: G/C bearing of B from A = 040&deg;, R/L bearing of B from A = 045&deg;. Find R/L bearing of A from B, G/C bearing of A from B.", ans: "R/L: 225&deg;, G/C: 230&deg;", sol: "CA = 45&deg; - 40&deg; = 5&deg;.<br>RL Brg from B = 45&deg; + 180&deg; = 225&deg;.<br>GC Brg from B = 225&deg; + 5&deg; = 230&deg;." },
+            { q: "G/C bearing of P from Q is 060&deg;. CA = 8&deg; in northern hemisphere. Find (i) R/L bearing of P from Q. (ii) G/C bearing of Q from P. (iii) R/L bearing of Q from P.", ans: "(i) 068&deg; (ii) 256&deg; (iii) 248&deg;", sol: "RL Brg P from Q = 60&deg; + 8&deg; = 68&deg;.<br>RL Brg Q from P = 68&deg; + 180&deg; = 248&deg;.<br>GC Brg Q from P = 248&deg; + 8&deg; = 256&deg;." },
+            { q: "G/C bearing of A from B is 130&deg; conversion angle = 6&deg; in southern hemisphere. Find (i) R/L brg of A from B, (ii) R/L brg of B from A, (iii) G/C brg of B from A.", ans: "(i) 124&deg; (ii) 304&deg; (iii) 298&deg;", sol: "RL Brg B = 130&deg; - 6&deg; = 124&deg;.<br>RL Brg A = 124&deg; + 180&deg; = 304&deg;.<br>GC Brg A = 304&deg; - 6&deg; = 298&deg;." },
+            { q: "R/L brg of X from Y is 240&deg; in Southern hemisphere. CA is 8&deg; find G/C brg of Y from X.", ans: "068&deg;", sol: "RL Brg from X = 240&deg; - 180&deg; = 060&deg;.<br>GC Brg of Y from X = 060&deg; + 8&deg; = 068&deg;." },
+            { q: "G/C brg of Y from X = 048&deg;, R/L brg of Y from X= 039&deg;. Find (i) Conversion angle (ii) Hemisphere (iii) G/C brg of X from Y.", ans: "(i) 9&deg; (ii) Southern (iii) 210&deg;", sol: "CA = 48&deg; - 39&deg; = 9&deg;.<br>GC > RL, therefore Southern Hemisphere.<br>RL Brg from Y = 39&deg; + 180&deg; = 219&deg;.<br>GC Brg from Y = 219&deg; - 9&deg; = 210&deg;." },
+            { q: "G/C brg of P from Q is 097&deg;. R/L brg of Q from P = 275&deg;. Find G/C brg of Q from P.", ans: "273&deg;", sol: "RL Brg from Q = 275&deg; - 180&deg; = 095&deg;.<br>CA = 97&deg; - 95&deg; = 2&deg;.<br>GC Brg of Q from P = 275&deg; - 2&deg; = 273&deg;." },
+            { q: "G/C brg of X from Y 130&deg;, G/C brg of Y from X 318&deg;. Find (i) CA (ii) hemisphere (iii) R/L brg of Y from X.", ans: "(i) 4&deg; (ii) Northern (iii) 314&deg;", sol: "Convergency = 318&deg; - 130&deg; - 180&deg; = 8&deg;.<br>CA = 4&deg;.<br>Northern Hemisphere.<br>RL Brg of Y from X = 318&deg; - 4&deg; = 314&deg;." },
+            { q: "G/C brg of A from B = 234&deg;, G/C brg of B from A = 066&deg; Find R/L brg of B from A.", ans: "060&deg;", sol: "234&deg; - 66&deg; = 168&deg; < 180&deg;, so Southern Hemisphere.<br>180&deg; - 168&deg; = 12&deg; Convergency.<br>CA = 6&deg;.<br>RL Brg of B from A = 66&deg; - 6&deg; = 060&deg;." },
+            { q: "A and B are on parallel of 30&deg; N. G/C brg of B from A = 273&deg;. Longitude of A = 8&deg; E, find long of B.", ans: "4&deg; W", sol: "RL Brg A = 270&deg;.<br>CA = 273&deg; - 270&deg; = 3&deg;.<br>3 = dlong &times; sin(30&deg;).<br>3 / 0.5 = dlong = 12&deg;W.<br>Long B = 8&deg;E - 12&deg;W = 4&deg;W." },
+            { q: "A and B are on parallel of 30&deg;S, longitude of A is 12&deg; E, G/C brg of A from B is 266&deg; Find longitude of B.", ans: "28&deg;E", sol: "RL Brg B = 270&deg;.<br>CA = 270&deg; - 266&deg; = 4&deg;.<br>Convergency = 8&deg;.<br>8 = dlong &times; sin(30&deg;).<br>16&deg; = dlong.<br>16&deg; + 12&deg; = 28&deg;E = Longitude B." },
+            { q: "A and B are on parallel of 40&deg;. G/C bearing of B from A is 096&deg;. Longitude of A 178&deg; E. Find longitude of B.", ans: "163&deg; 20' W", sol: "RL Brg from A = 90&deg;.<br>CA = 96&deg; - 90&deg; = 6&deg;.<br>Convergency = 12&deg;.<br>12 = dlong &times; sin(40&deg;).<br>dlong = 18&deg;40'.<br>178&deg;E + 18&deg;40' = 196&deg;40'E.<br>Long B = 360&deg; - 196&deg;40' = 163&deg;20'W." },
+            { q: "X and Y are on parallel 45&deg;. G/C brg of Y from X is 262&deg;. Longitude of X 3&deg; E, find long of Y.", ans: "19&deg; 37' W", sol: "RL Brg from X = 270&deg;.<br>CA = 270&deg; - 262&deg; = 8&deg;.<br>Convergency = 16&deg;.<br>16 = dlong &times; sin(45&deg;).<br>dlong = 16 / 0.707 = 22&deg;37'.<br>Long Y = 3&deg;E - 22&deg;37' = 19&deg;37'W." },
+            { q: "G/C brg of X from Y 300&deg;. CA = 7&deg; in northern hemisphere. Find G/C brg of Y from X.", ans: "106&deg;", sol: "RL Brg from Y = 300&deg; - 7&deg; = 293&deg;.<br>RL Brg from X = 293&deg; - 180&deg; = 113&deg;.<br>GC Brg from X = 113&deg; - 7&deg; = 106&deg;." },
+            { q: "An aircraft passes position A (60&deg;00'N 120&deg;00'W) on route to position B(60&deg;00'N 140&deg;30'W). What is the great circle track on departure from A?", ans: "279&deg;", sol: "Convergency = dlong &times; sin(lat) = 20.5 &times; sin(60&deg;) = 17.6&deg;.<br>CA = 8.8&deg;.<br>RL Brg A = 270&deg;.<br>GC Brg A = 270&deg; + 8.8&deg; = 278.8&deg; &approx; 279&deg;." },
+            { q: "Great circle from P to Q measured at P=095&deg; Southern hemisphere Conversion angle P - Q =7&deg; What is the rhumb line track P - Q?", ans: "088&deg;", sol: "GC Brg from P = 95&deg;.<br>CA = 7&deg;.<br>RL Brg at P = 95&deg; - 7&deg; = 88&deg;." },
+            { q: "The great circle track X - Y measured at X is 319&deg;, and Y 325&deg;. Consider the following statements:", ans: "Southern hemisphere, rhumb line track is 322&deg;.", sol: "325&deg; - 319&deg; = 6&deg; convergency.<br>CA = 3&deg;.<br>SH -> RL track X = 325&deg; - 3&deg; = 322&deg;." },
+            { q: "On a Mercator chart GC track from A 25&deg;00'S 10&deg;00'W to B 35&deg;00'S 40&deg;00'W is 242&deg;. Find RL track from B to A.", ans: "069.5&deg;", sol: "Convergency = dlong &times; sin(lat) = 30 &times; sin(30&deg;) = 15&deg;.<br>CA = 7.5&deg;.<br>RL track at A = 242&deg; + 7.5&deg; = 249.5&deg;.<br>RL track from B = 249.5&deg; - 180&deg; = 69.5&deg;." },
+            { q: "The angle between the true great-circle track and the true rhumb-line track joining the following points: A (60&deg;S 165&deg;W) B (60&deg;S 177&deg;E), at the place of departure A, is:", ans: "7.8&deg;", sol: "The angle between GC and RL tracks is the Conversion Angle (CA).<br>CA = 1/2 Convergency.<br>Convergency = dlong &times; sin(Lat).<br><br>dlong = 165&deg;W to 177&deg;E = 360&deg; - (165 + 177) = 360&deg; - 342&deg; = 18&deg;.<br><br>Convergency = 18 &times; sin(60&deg;) = 18 &times; 0.866 = 15.58&deg;.<br>CA = 15.58 / 2 = 7.79&deg; &approx; <strong>7.8&deg;</strong>." },
+            { q: "The rhumb line track between position A (45&deg;00'N, 010&deg;00'W) and position B (48&deg;30'N, 015&deg;00'W) is approximately:", ans: "315&deg;", sol: "dlat = 48&deg;30' - 45&deg;00' = 3&deg;30' = 210 NM.<br>dlong = 15&deg;W - 10&deg;W = 5&deg; = 300'.<br>Departure = dlong &times; cos(mean lat). Mean lat = 46.75&deg;. Let's use start lat for approximation: 300 &times; cos(45&deg;) = 212 NM.<br><br>tan(&theta;) = Departure / dlat = 212 / 210 &approx; 1.009.<br>&theta; = tan<sup>-1</sup>(1.009) = 44.7&deg;.<br><br>Flying North and West. Track = 270&deg; + 45&deg; = <strong>315&deg;</strong>." },
+            { q: "Place A is at 70&deg;00'S 60&deg;00'W and place B 70&deg;00'S 30&deg;00'E. Find initial great circle track.", ans: "132&deg;", sol: "dlong = 90&deg;.<br>RL track A = 090&deg;.<br>Convergency = 90 &times; sin(70&deg;) = 84.57&deg;.<br>CA = 42.3&deg;.<br>GC Track A = 090&deg; + 42.3&deg; = 132.3&deg; &approx; 132&deg;." },
+            
+            // --- PORTAL SPECIFIC UNIQUE QUESTIONS ---
+            { q: "What is the Rhumb line (RL) direction from 45&deg;N 14&deg;12'W to 45&deg;N 12&deg;48'E?", ans: "090&deg; (T)", sol: "Since both positions are on the exact same latitude (45&deg;N), the Rhumb Line connecting them runs straight along the parallel of latitude.<br><br>Moving from 14&deg;12'W to 12&deg;48'E is a movement directly East.<br><strong>Therefore, the true RL track is exactly 090&deg; (T).</strong>" },
+            { q: "Which of the following differences in latitude will give the biggest difference in the initial Great Circle track and the mean Great Circle track between two points separated by 10&deg; change of longitude?", ans: "60N and 55N", sol: "The difference between the initial GC track and the mean GC track (which equals the RL track) is the <strong>Conversion Angle</strong>.<br>CA = 1/2 Convergency = 1/2 (dlong &times; sin(Lat)).<br>Since sine increases as latitude increases (max at 90&deg;), the highest latitudes will produce the largest difference.<br><strong>60N and 55N are the highest latitudes provided in the options.</strong>" },
+            { q: "The following waypoints are entered into an INS: WPT 1: 60N 30W, WPT 2: 60N 20W, WPT 3: 60N 10W. The INS is connected to the autopilot. The track change on passing WPT 2 is:", ans: "a 9 deg decrease", sol: "Step 1: Convergency = 10&deg; &times; sin(60&deg;) = 8.66&deg;.<br>CA = 4.33&deg;.<br><br>Step 2: Arriving track at WPT 2.<br>In NH, a GC track flying East (090&deg;) curves North. Start track at WPT 1 = 090&deg; - 4.33&deg; = 085.67&deg;.<br>Arriving track at WPT 2 = 085.67&deg; + 8.66&deg; = 094.33&deg;.<br><br>Step 3: Departing track from WPT 2.<br>Starting fresh leg to WPT 3 = 090&deg; - 4.33&deg; = 085.67&deg;.<br><br>Step 4: Change = 085.67&deg; - 094.33&deg; = -8.66&deg;.<br><strong>This rounds to a 9&deg; decrease.</strong>" },
+            { q: "An aircraft flies a great circle track from 56&deg;N 070&deg;W to 62&deg;N 110&deg;E. The total distance travelled is:", ans: "3720 NM", sol: "The longitudes (070&deg;W and 110&deg;E) are anti-meridians (they sum to 180&deg;). This means the shortest Great Circle goes directly over the North Pole.<br><br>Distance from 56&deg;N to Pole = 90&deg; - 56&deg; = 34&deg;.<br>Distance from Pole to 62&deg;N = 90&deg; - 62&deg; = 28&deg;.<br><br>Total D'lat = 34&deg; + 28&deg; = 62&deg;.<br>Distance = 62 &times; 60 = <strong>3720 NM</strong>." },
+            { q: "The rhumb-line distance between points A (60&deg;00'N 002&deg;30'E) and B (60&deg;00'N 007&deg;30'W) is:", ans: "300 NM", sol: "dlong = 007&deg;30'W + 002&deg;30'E = 10&deg;.<br>dlong in minutes = 10 &times; 60 = 600'.<br><br>Departure (RL Distance) = dlong(mins) &times; cos(Lat)<br>Distance = 600 &times; cos(60&deg;)<br>Distance = 600 &times; 0.5<br><strong>Distance = 300 NM</strong>." },
+            { q: "In the Northern Hemisphere the rhumb line track from position A to B is 230&deg;, the convergency is 6&deg; and the difference in longitude is 10&deg;. What is the initial rhumb line track from B to A?", ans: "050&deg;", sol: "A Rhumb Line maintains a constant angle to the meridians. Therefore, the return Rhumb Line track is always the exact reciprocal of the outbound Rhumb Line track.<br><br>Track B to A = 230&deg; - 180&deg; = <strong>050&deg;</strong>.<br><em>(Note: Convergency and dlong are given as distractors)</em>." },
+            { q: "The great circle bearing of position B from position A in the Northern Hemisphere is 040&deg;. If the Conversion Angle is 4&deg;, what is the great circle bearing of A from B?", ans: "228&deg;", sol: "Step 1: Find RL track from A to B.<br>In NH flying East (040&deg;), GC > RL.<br>RL bearing from A = 040&deg; + 4&deg; = 044&deg;.<br><br>Step 2: Find RL track from B to A (reciprocal).<br>RL bearing from B = 044&deg; + 180&deg; = 224&deg;.<br><br>Step 3: Find GC track from B to A.<br>Flying West (224&deg;) in NH, GC > RL.<br>GC bearing from B = 224&deg; + 4&deg; = <strong>228&deg;</strong>." },
+            { q: "The initial great circle track from A to B is 080&deg; and the rhumb line track is 083&deg;. What is the initial great circle track from B to A and in which Hemisphere are the two positions located?", ans: "266&deg; and in the northern hemisphere", sol: "Step 1: Determine Hemisphere.<br>RL (083&deg;) > GC (080&deg;). When flying East (080-090 range), RL > GC happens in the <strong>Northern Hemisphere</strong>.<br><br>Step 2: Find Conversion Angle.<br>CA = 083&deg; - 080&deg; = 3&deg;.<br><br>Step 3: Find return GC track.<br>RL track B to A = 083&deg; + 180&deg; = 263&deg;.<br>Flying West (263&deg;) in NH, GC > RL.<br>GC B to A = 263&deg; + 3&deg; = <strong>266&deg;</strong>." },
+            { q: "A Lambert conformal conic chart has a constant of the cone of 0.80. A straight line course drawn on this chart from A (53&deg;N 004&deg;W) to B is 080&deg; at A; course at B is 092&deg;(T). What is the longitude of B?", ans: "011&deg;E", sol: "Step 1: On a Lambert chart, straight lines are Great Circles. Chart Convergency = 092&deg; - 080&deg; = 12&deg;.<br><br>Step 2: Chart Convergency = dlong &times; Cone Constant.<br>12 = dlong &times; 0.80<br>dlong = 12 / 0.80 = 15&deg;.<br><br>Step 3: Since track increases, flight is Eastwards.<br>004&deg;W + 15&deg;E = <strong>011&deg;E</strong>." },
+            { q: "The Great Circle bearing from A (70&deg;S 030&deg;W) to B (70&deg;S 060&deg;E) is approximately:", ans: "132&deg; (T)", sol: "Step 1: RL track.<br>dlong = 90&deg;. Same latitude (70&deg;S), B is East of A. RL track = 090&deg; (T).<br><br>Step 2: Convergency and CA.<br>Conv = 90 &times; sin(70&deg;) = 90 &times; 0.9397 = 84.57&deg;.<br>CA = 84.57 / 2 = 42.3&deg;.<br><br>Step 3: Apply CA.<br>In Southern Hemisphere flying East, GC is South of RL (right). Add CA.<br>GC track = 090&deg; + 42.3&deg; = 132.3&deg; &approx; <strong>132&deg; (T)</strong>." },
+            { q: "Given: A is N55 E/W 000, B is N54 E 010. If the true great circle track from A to B is 100T, what is the true Rhumb Line track at A?", ans: "100", sol: "The average true course of the Great Circle track equals the Rhumb Line track. <strong>Answer: 100</strong>" },
+            { q: "Given: Waypoint 1 = 60&deg;S 030&deg;W, Waypoint 2 = 60&deg;S 020&deg;W. What will be the approximate latitude shown on the display unit of an inertial navigation system at longitude 025&deg;W?", ans: "060&deg; 06'S", sol: "Step 1: Find Cross-Track Distance using Trigonometry.<br>Convergency = 10 &times; sin(60&deg;) = 8.66&deg;.<br>CA = 4.33&deg;.<br>At the midpoint (025&deg;W), the track deviation is at its maximum.<br><br>Step 2: Base = 5&deg; dlong &times; 60 &times; cos(60&deg;) = 150 NM.<br>tan(2.16&deg;) = Perpendicular / Base<br>Perpendicular = tan(2.16&deg;) &times; 150 &approx; 5.65 NM.<br><br>Step 3: Apply deviation.<br>5.65 NM = 0&deg; 5' 39\" latitude deviation.<br>Since GC goes South (towards pole) in SH: 60&deg;S + 0&deg;5'39\" = 60&deg;05'39\"S &approx; <strong>060&deg; 06'S</strong>." },
+            { q: "Waypoint 1 is 60N 30W. Waypoint 2 is 60N 20W. The aircraft autopilot is coupled to the INS steer. What is the latitude on passing 25W?", ans: "6005N", sol: "Same logic as the previous question, but in the Northern Hemisphere.<br>Deviation = 5.65 NM = 0&deg; 5' 39\".<br>In NH, GC curves North towards the pole.<br>60&deg;N + 0&deg;5'39\" &approx; <strong>60&deg; 05'N</strong>." }
+        ];
+
+        let activeQuizDataNum = [], currentNumIndex = 0;
+        
+        function startNumericals() { 
+            switchView('numerical-linear-page'); 
+            activeQuizDataNum = numericalsData; 
+            currentNumIndex = 0; 
+            renderNumerical(); 
+        }
+
+        function renderNumerical() { 
+            if (activeQuizDataNum.length === 0) return; 
+            
+            const qData = activeQuizDataNum[currentNumIndex]; 
+            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
+            document.getElementById('num-q-text').innerHTML = qData.q; 
+            
+            const ansBox = document.getElementById('num-ans-box'); 
+            ansBox.innerHTML = `<strong>Answer:</strong> ${qData.ans}`; 
+            ansBox.style.display = 'none'; 
+            
+            const solBox = document.getElementById('num-sol-box'); 
+            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.style.display = 'none'; 
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
+            document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < activeQuizDataNum.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

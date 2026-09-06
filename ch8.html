@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 8 | Projections</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        /* SHARED HEADER/PROGRESS STYLING */
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 25px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        
+        /* MCQ STYLING */
+        .mcq-options { display: flex; flex-direction: column; gap: 10px; }
+        .mcq-option { background-color: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 15px 20px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 1.05rem; transition: all 0.2s; }
+        .mcq-option:hover:not(.disabled) { background-color: var(--accent); }
+        .mcq-option.disabled { cursor: default; }
+        .mcq-option.correct { background-color: var(--correct-bg); border-color: var(--correct-border); }
+        .mcq-option.wrong { background-color: var(--wrong-bg); border-color: var(--wrong-border); }
+        
+        /* NUMERICALS STYLING */
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        
+        /* CONTROLS */
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 8: Projections</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="startQuiz()">
+                    <h3>Quiz Engine</h3>
+                    <p>Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals Engine</h3>
+                    <p>Scale Calculations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUIZ ENGINE (Theory MCQs) -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Theory Question 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Quiz</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            
+            <div class="content-area">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="mcq-options" id="quiz-options"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- NUMERICALS ENGINE (Reveal Answer Only) -->
+        <div id="numerical-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Calculation 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // QUIZ DATA (Chart Theory)
+        // ==========================================
+        const quizData = [
+             { q: "<strong>Q1.</strong> Radio Navigation charts (Jeppesen) uses:", options: ["a) Lamberts conformal conic projection", "b) Mercator's projection", "c) IMPP"], correct: 0 },
+            { q: "<strong>Q2.</strong> A rhumb line is a straight line. This applies to:", options: ["a) Mercators", "b) Lamberts", "c) IMPP"], correct: 0 },
+            { q: "<strong>Q3.</strong> Meridians and parallel intersect at right angles. This applies to:", options: ["a) Mercators", "b) Lamberts", "c) Both."], correct: 2 },
+            { q: "<strong>Q4.</strong> On the Mercator's chart,", options: ["a) Distortion increases away from the Equator.", "b) Distortion increases away from the Pole.", "c) Parallels of latitude are not straight lines."], correct: 0 },
+            { q: "<strong>Q5.</strong> The scale on a Lamberts projection is correct only along:", options: ["a) The standard parallels", "b) The equator", "c) The end parallels of latitude and 2degs. on either side of the central meridian."], correct: 0 },
+            { q: "<strong>Q6.</strong> Charts are used only for:", options: ["a) Flying over seas", "b) Dead reckoning navigation", "c) Polar navigation."], correct: 0 },
+            { q: "<strong>Q7.</strong> In an ortho morphic projection,", options: ["a) Meridians and parallels intersect at right angles", "b) Meridians and parallels are straight lines", "c) Both the above"], correct: 0 },
+            { q: "<strong>Q8.</strong> The chart that is generally used for navigation in polar areas is based on a?", options: ["a) Lambert's Conformal.", "b) Transverse Mercator.", "c) Stereographical projection."], correct: 2 },
+            { q: "<strong>Q9.</strong> On a Lambert conformal conic chart the convergence of the meridians is?", options: ["a) The same as earth convergency at the parallel of origin.", "b) The same as the scale.", "c) Most accurate at the standard parallels."], correct: 0 },
+            { q: "<strong>Q10.</strong> On a Lambert conformal conic projection, with two standard parallels the scale is?", options: ["a) Correct only along the parallel of origin.", "b) Correct only at the poles.", "c) Correct only along the standard parallels."], correct: 2 },
+            { q: "<strong>Q11.</strong> On a Transverse Mercator chart, scale is exactly correct along the?", options: ["a) Meridian of tangency.", "b) Prime meridian.", "c) Standard latitudes."], correct: 0 },
+            { q: "<strong>Q12.</strong> On lamberts conical projection, the given scale is correct at _______ and convergence is correct at _______.", options: ["a) Latitude of origin, latitude of origin", "b) Latitude of origin, standard Parallels", "c) Standard Parallels, latitude of origin."], correct: 2 },
+            { q: "<strong>Q13.</strong> While measuring track at Lambert conical projection protractor is to be placed at:", options: ["a) Latitude of departure", "b) Latitude of arrival", "c) Mid way longitude"], correct: 2 },
+            { q: "<strong>Q14.</strong> The angular difference, on a Lambert conformal conic chart, between the arrival and departure track is equal to?", options: ["a) Departure angle.", "b) Map convergence.", "c) Secant of &frac12; latitude."], correct: 1 },
+            { q: "<strong>Q15.</strong> On a Direct Mercator chart, meridians are?", options: ["a) Parallel, equally spaced, horizontal straight lines.", "b) Converging curved lines.", "c) Parallel, equally spaced, vertical straight lines."], correct: 2 },
+            { q: "<strong>Q16.</strong> On which of the following chart projections is it not possible to represent the north or south poles?", options: ["a) Polar Stereographic.", "b) Direct Mercator.", "c) Lambert's Conical."], correct: 1 },
+            { q: "<strong>Q17.</strong> Which one of the following, concerning great circles on a Direct Mercator chart, is correct?", options: ["a) With the exception of meridians and the equator, they are curves concave to the equator.", "b) Straight lines.", "c) Curves concave to the nearest pole."], correct: 0 },
+            { q: "<strong>Q18.</strong> On a Lambert conformal conic chart, the distance between parallels of latitude spaced the same number of degrees apart?", options: ["a) Increases between and reduces outside of the standard parallels.", "b) Reduces between and expands outside the standard parallels.", "c) Is constant between the standard parallels."], correct: 1 },
+            { q: "<strong>Q19.</strong> Which one of the following statements is correct concerning the appearance of great circles, with the exception of meridians, on a polar stereographic chart whose tangency is at the pole?", options: ["a) The higher the latitude the closer they approximate to a straight line.", "b) The lower the latitude the closer they approximate to straight lines.", "c) Never approximate to straight lines."], correct: 0 },
+            { q: "<strong>Q20.</strong> Which one of the following describes the appearance of rhumb lines, except meridians, on a polar stereographic chart.", options: ["a) Straight lines.", "b) Curves concave to the pole.", "c) Approximately straight lines."], correct: 1 },
+            { q: "<strong>Q21.</strong> What is the value of the convergence factor on a polar stereographic chart?", options: ["a) 2.0.", "b) 1.5.", "c) 1.0."], correct: 2 },
+            { q: "<strong>Q22.</strong> On a Direct Mercator, rhumb lines are?", options: ["a) Straight lines.", "b) Curves concave to the nearest pole.", "c) Curves convex to the nearest pole."], correct: 0 },
+            { q: "<strong>Q23.</strong> A perfectly straight line on a Lamberts chart is?", options: ["a) A parallel of latitude.", "b) A rhumb line.", "c) A meridian of longitude."], correct: 2 },
+            { q: "<strong>Q24.</strong> Which of the following statements best describes how scale varies on a Mercator chart?", options: ["a) It is correct on the standard parallels, but expands outside them...", "b) Expands directly with the secant of the latitude.", "c) Expands as the secant (&frac12; x co-latitude)."], correct: 1 },
+            { q: "<strong>Q25.</strong> On a Lambert Conformal chart the distance between meridians 5&deg; apart along latitude 37&deg; North is 9 cm. The scale of the chart at that parallel approximates?", options: ["a) 1 : 3 500 000.", "b) 1 : 5 000 000.", "c) 1 : 4 000 000."], correct: 1 },
+            { q: "<strong>Q26.</strong> Where is the convergency correct on a Transverse Mercator chart?", options: ["a) At the datum meridian and the Equator.", "b) Only at the Equator and poles.", "c) Only at the datum meridian."], correct: 1 },
+            { q: "<strong>Q27.</strong> In which of the following projections will a plane surface touch the reduced earth at one of the poles?", options: ["a) Stereographic.", "b) Direct Mercator.", "c) Transverse Mercator."], correct: 0 },
+            { q: "<strong>Q28.</strong> The scale on a Lambert's conformal conic chart?", options: ["a) Is constant.", "b) Is constant along a parallel of latitude.", "c) Is constant along a meridian of longitude."], correct: 1 },
+            { q: "<strong>Q29.</strong> The scale is correct on a transverse Mercator chart?", options: ["a) Along the datum meridian and meridians at 90&deg; to it.", "b) At the prime meridian.", "c) Along the great circle of tangency."], correct: 2 },
+            { q: "<strong>Q30.</strong> The nominal scale of a Lambert conformal conic chart is the?", options: ["a) Scale at the standard parallels.", "b) Scale at the parallel of origin.", "c) Scale at the poles."], correct: 0 },
+            { q: "<strong>Q31.</strong> What type of projection is generally used for charts used for navigation in North and south polar areas?", options: ["a) Lambert's conformal.", "b) Polar stereographical projection.", "c) Direct Mercator."], correct: 1 },
+            { q: "<strong>Q32.</strong> On a Lambert Conformal conic chart great circle that are not meridians are?", options: ["a) Curves concave to the pole of projection.", "b) Straight lines within the standard parallels.", "c) Curves concave to the parallel of origin."], correct: 2 },
+            { q: "<strong>Q33.</strong> Parallels of latitude, except the equator, are?", options: ["a) Rhumb lines.", "b) Complex curves.", "c) Great circle."], correct: 0 },
+            { q: "<strong>Q34.</strong> On Jeppesen charts scale is given in following manner:", options: ["a) Representative fraction.", "b) Graduated scale and statement in words", "c) All of the above"], correct: 2 },
+            { q: "<strong>Q35.</strong> Nautical mile is more than a statute mile. Statute mile is more than a kilometer.", options: ["a) Both statements are correct.", "b) Only kilometer is more than a nautical mile", "c) Only statute mile is more than a nautical mile."], correct: 0 },
+            { q: "<strong>Q36.</strong> 1000 meters equals:", options: ["a) 1 nm", "b) 0.545 nm", "c) 0.545 km"], correct: 1 },
+            { q: "<strong>Q37.</strong> Contours are lines drawn on a map or chart joining:", options: ["a) Places of equal elevation", "b) Equal pressure", "c) Equal variation."], correct: 0 },
+            { q: "<strong>Q38.</strong> Maps indicate the details of the topography. Pilots can use this for:", options: ["a) Contact navigation", "b) Instrument flying", "c) Dead reckoning navigation"], correct: 0 },
+            { q: "<strong>Q39.</strong> Graticule is the network of meridians and parallels on:", options: ["a) Earth", "b) Maps", "c) Both"], correct: 1 },
+            { q: "<strong>Q40.</strong> The scale of a chart is shown as 1: 1million. This means that:", options: ["a) 1\" on the chart equals 1 million inches on the Earth", "b) 1 c.m. on the chart represents 1 million centimeters on the Earth", "c) Both."], correct: 2 },
+            { q: "<strong>Q41.</strong> Representation of high ground on a projection can be in the form of:", options: ["a) Contours and form lines", "b) Spot heights and Layer tinting", "c) All the above"], correct: 2 },
+            { q: "<strong>Q1.</strong> A negative (westerly) magnetic variation signifies that?", options: ["a) True North is East of Magnetic North.", "b) True North is West of Magnetic North.", "c) Magnetic North is West of Compass North.", "d) Magnetic North is East of Compass North."], correct: 0 },
+            { q: "<strong>Q2.</strong> The nominal scale of a Lambert conformal conic chart is the?", options: ["a) Scale at the standard parallels.", "b) Scale at the Equator.", "c) Scale at the midway point between the two standard parallels.", "d) Everywhere on the chart."], correct: 0 },
+            { q: "<strong>Q3.</strong> A positive (easterly) magnetic variation signifies that?", options: ["a) True North is East of Magnetic North.", "b) True North is West of Magnetic North.", "c) Magnetic North is West of Compass North.", "d) Magnetic North is East of Compass North."], correct: 1 },
+            { q: "<strong>Q4.</strong> The chart that is generally used for navigation in polar areas is based on a?", options: ["a) Lambert's Conformal.", "b) Transverse Mercator.", "c) Stereographical projection.", "d) Direct Mercator."], correct: 2 },
+            { q: "<strong>Q5.</strong> On a Lambert conformal conic chart the convergence of the meridians is?", options: ["a) The same as earth convergency at the parallel of origin.", "b) The same as the scale.", "c) Most accurate at the standard parallels.", "d) Least accurate at the parallel of origin."], correct: 0 },
+            { q: "<strong>Q6.</strong> On a Direct Mercator chart, a rhumb line appears as a?", options: ["a) Curve concave to the nearest poles.", "b) Curve convex to the nearest pole.", "c) Straight line.", "d) Curve convex to the equator."], correct: 2 },
+            { q: "<strong>Q7.</strong> On a Lambert conformal conic projection, with two standard parallels the scale is?", options: ["a) Correct only along the parallel of origin.", "b) Correct only at the poles.", "c) Correct only along the standard parallels.", "d) Correct at all points on the chart."], correct: 2 },
+            { q: "<strong>Q8.</strong> On a Lambert conformal conic chart, with two standard parallels, the quoted scale is correct?", options: ["a) Midway between the two standard parallels.", "b) Only along the two standard parallels.", "c) Only at the parallel of origin.", "d) Only at the centre of the chart."], correct: 1 },
+            { q: "<strong>Q9.</strong> On a Direct Mercator chart a great circle will be represented by a?", options: ["a) Straight lines.", "b) Curves convex to the equator.", "c) Curve concave to the equator.", "d) Curves concave to the nearest pole."], correct: 2 },
+            { q: "<strong>Q10.</strong> On a Lambert Conformal Conic chart earth convergency is most accurately represented at the?", options: ["a) Standard parallels.", "b) Outside the standard parallels.", "c) At all points between the standard parallels.", "d) Parallel of origin."], correct: 3 },
+            { q: "<strong>Q11.</strong> On a Transverse Mercator chart, scale is exactly correct along the?", options: ["a) Meridian of tangency.", "b) Prime meridian.", "c) Standard latitudes.", "d) latitude of origin."], correct: 0 },
+            { q: "<strong>Q12.</strong> The angular difference, on a Lambert conformal conic chart, between the arrival and departure track is equal to?", options: ["a) Departure angle.", "b) Map convergence.", "c) Secant of &frac12; latitude.", "d) Secant of longitude."], correct: 1 },
+            { q: "<strong>Q13.</strong> Parallels of latitude, except the equator, are?", options: ["a) Rhumb lines.", "b) Great circles.", "c) Curves convex to the nearest pole.", "d) Curves concave to the nearest pole."], correct: 0 },
+            { q: "<strong>Q14.</strong> On a Direct Mercator chart, meridians are?", options: ["a) Parallel, equally spaced, horizontal straight lines.", "b) Converging curved lines.", "c) Parallel, equally spaced, vertical straight lines.", "d) Diverging curved lines."], correct: 2 },
+            { q: "<strong>Q15.</strong> On which of the following chart projections is it not possible to represent the north or south poles?", options: ["a) Polar Stereographic.", "b) Transverse Mercator.", "c) Lambert's Conical.", "d) Direct Mercator."], correct: 3 },
+            { q: "<strong>Q16.</strong> Which one of the following, concerning great circles on a Direct Mercator chart, is correct?", options: ["a) With the exception of meridians and the equator, they are curves concave to the equator.", "b) Straight lines.", "c) Curves concave to the nearest pole.", "d) With the exception of meridians and the equator, as curves convex to the equator."], correct: 0 },
+            { q: "<strong>Q17.</strong> On a Lambert conformal conic chart, the distance between parallels of latitude spaced the same number of degrees apart?", options: ["a) Increases between and reduces outside of the standard parallels.", "b) Reduces between and expands outside, the standard parallels.", "c) Is constant between the standard parallels.", "d) Is constant outside of the standard parallels."], correct: 1 },
+            { q: "<strong>Q18.</strong> Which one of the following statements is correct concerning the appearance of great circles, with the exception of meridians, on a Polar Stereographic chart whose tangency is at the pole?", options: ["a) The higher the latitude the closer they approximate to a straight line.", "b) The lower the latitude the closer they approximate to straight lines.", "c) Never approximate to straight lines.", "d) Always approximate to straight lines."], correct: 0 },
+            { q: "<strong>Q19.</strong> Which one of the following describes the appearance of rhumb lines, except meridians, on a Polar Stereographic chart?", options: ["a) Straight lines.", "b) Curves concave to the Pole.", "c) Approximately straight lines.", "d) Curves closer to the pole than the equivalent Great Circle."], correct: 1 },
+            { q: "<strong>Q20.</strong> What is the value of the convergence factor on a Polar Stereographic chart?", options: ["a) 2.0.", "b) 1.5.", "c) 1.0.", "d) 0.5."], correct: 2 },
+            { q: "<strong>Q21.</strong> On a Direct Mercator, rhumb lines are?", options: ["a) Straight lines.", "b) Curves concave to the nearest pole.", "c) Curves convex to the nearest pole.", "d) Curves concave to the Equator."], correct: 0 },
+            { q: "<strong>Q22.</strong> A perfectly straight line on a Lamberts chart is?", options: ["a) A parallel of latitude.", "b) A rhumb line.", "c) A meridian of longitude.", "d) A great circle."], correct: 2 },
+            { q: "<strong>Q23.</strong> Which of the following statements best describes how scale varies on a Mercator chart?", options: ["a) It is correct on the standard parallels, but expands outside them, and contracts within them.", "b) Expands as the secant of the East/West great circle distance.", "c) Expands as the secant (&frac12; x co-latitude).", "d) Expands directly with the secant of the latitude."], correct: 3 },
+            { q: "<strong>Q24.</strong> How do rhumb lines, (other than meridians), appear on Polar Stereographic charts?", options: ["a) As straight lines.", "b) As lines concave to the nearer pole.", "c) As lines convex to the nearer pole.", "d) As ellipses around the pole."], correct: 1 },
+            { q: "<strong>Q25.</strong> Where is the convergency correct on a Transverse Mercator chart?", options: ["a) At the datum meridian and the Equator.", "b) Only at the Equator and Poles.", "c) Only at the datum meridian.", "d) At the Parallel of Origin."], correct: 0 },
+            { q: "<strong>Q26.</strong> In which of the following projections will a plane surface touch the reduced earth at one of the Poles?", options: ["a) Transverse Mercator.", "b) Direct Mercator.", "c) Lambert's.", "d) Stereographic."], correct: 3 },
+            { q: "<strong>Q27.</strong> How are great circles shown on a direct Mercator chart?", options: ["a) Curves concave to the nearest pole.", "b) Curves convex to the nearest pole.", "c) Straight lines.", "d) Rhumb lines."], correct: 1 },
+            { q: "<strong>Q28.</strong> The scale on a Lambert's conformal conic chart?", options: ["a) Is constant.", "b) Is constant along a parallel of latitude.", "c) Is constant along a meridian of longitude.", "d) Varies slightly as a function of longitude and latitude."], correct: 1 },
+            { q: "<strong>Q29.</strong> The scale is correct on a Transverse Mercator chart?", options: ["a) Along the datum meridian and meridians at 90&deg; to it.", "b) At the prime meridian.", "c) Along the great circle of tangency.", "d) At the poles and the equator."], correct: 2 },
+            { q: "<strong>Q49.</strong> The nominal scale of a Lambert conformal conic chart is the?", options: ["a) Scale at the standard parallels.", "b) Scale at the parallel of origin.", "c) Scale at the poles.", "d) Constant at all points on the chart."], correct: 0 },
+            { q: "<strong>Q50.</strong> What type of projection is generally used for charts used for navigation in North and South polar areas?", options: ["a) Lambert's Conformal.", "b) Polar Stereographical projection.", "c) Direct Mercator.", "d) Oblique Mercator."], correct: 1 }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizAnswers = new Array(quizData.length).fill(null);
+
+        function startQuiz() {
+            switchView('quiz-page');
+            currentQuizIndex = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            if (quizData.length === 0) return;
+            const qData = quizData[currentQuizIndex];
+            
+            document.getElementById('quiz-counter').innerText = `Theory Q${currentQuizIndex + 1} of ${quizData.length}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuizIndex + 1) / quizData.length) * 100}%`;
+            document.getElementById('quiz-q-text').innerHTML = qData.q;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            const hasAnswered = quizAnswers[currentQuizIndex] !== null;
+            
+            qData.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'mcq-option';
+                btn.innerHTML = optText;
+                
+                if (hasAnswered) {
+                    btn.classList.add('disabled');
+                    if (index === qData.correct) {
+                        btn.classList.add('correct');
+                    } else if (index === quizAnswers[currentQuizIndex]) {
+                        btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => selectQuizOption(index);
+                }
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQuizIndex === 0;
+            document.getElementById('quiz-next-btn').disabled = currentQuizIndex === quizData.length - 1;
+        }
+
+        function selectQuizOption(selectedIndex) {
+            quizAnswers[currentQuizIndex] = selectedIndex;
+            renderQuiz();
+        }
+
+        function goPrevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
+        function goNextQuiz() { if (currentQuizIndex < quizData.length - 1) { currentQuizIndex++; renderQuiz(); } }
+
+
+        // ==========================================
+        // NUMERICALS DATA (Scale Calculations)
+        // ==========================================
+        const numericalsData = [ 
+            { q: "<strong>Q42.</strong> Map Distance = 10\". Earth Distance = 120 nm. Find scale.", ans: "1 / 8,755,200" },
+            { q: "<strong>Q43.</strong> Map Distance = 13.2\". ED = 350 nm. Find scale.", ans: "1 / 1,934,545" },
+            { q: "<strong>Q44.</strong> On a map 3 cm represent earth Distance of 200 statute mile. Find scale of map.", ans: "1 / 10,728,960" },
+            { q: "<strong>Q45.</strong> On a map scale of 1: 2x10&sup6;. How many km are represented by a line 4.2\" long?", ans: "213.36 km" },
+            { q: "<strong>Q46.</strong> On a map scale of 1: 1x10&sup6;. How many inches are represented by ground Distance of 400 km.", ans: "15.74 inches" },
+            { q: "<strong>Q47.</strong> On a mercator chart scale at 57&deg;N = 1: 1x10&sup6;. Find Scale at:<br>(i) Equator<br>(ii) 35&deg;S<br>(iii) 25&deg;N", ans: "(i) 1 : 1,838,235<br>(ii) 1 : 1,505,794<br>(iii) 1 : 1,666,006" },
+            { q: "<strong>Q48.</strong> On a direct Mercator projection, the distance measured between two meridians spaced 5&deg; apart at latitude 60&deg;N is 8 cm. The Scale of this chart at latitude 60&deg;N is approximately?", ans: "a) 1 : 3 500 000" },
+            { q: "<strong>Q49.</strong> On a direct Mercator projection, at latitude 45&deg;N, a certain length represents 70 NM. At latitude 30&deg;North, the same length represents approximately?", ans: "a) 86 nm." },
+            { q: "<strong>Q50.</strong> At 60&deg;N the scale of a direct Mercator chart is 1 : 3000 000. What is the scale at the equator?", ans: "b) 1 : 6 000 000." },
+            { q: "<strong>Q1.</strong> On a direct Mercator projection, the distance measured between two meridians spaced 5&deg; apart at latitude 60&deg;N is 8 cm. The scale of this chart at latitude 60&deg;N is approximately?", ans: "a) 1 : 3 500 000." },
+            { q: "<strong>Q2.</strong> On a Lambert Conformal chart the distance between meridians 5&deg; apart along latitude 37&deg; North is 9 cm. The scale of the chart at that parallel approximates?", ans: "b) 1 : 5 000 000." },
+            { q: "<strong>Q3.</strong> A Mercator chart has a scale at the equator = 1 : 3 704 000. What is the scale at latitude 60&deg; S?", ans: "c) 1 : 1 852 000." },
+            { q: "<strong>Q4.</strong> A straight line drawn on a chart measures 4.63 cm and represents 150 NM. The chart scale is?", ans: "a) 1 : 6 000 000." },
+            { q: "<strong>Q5.</strong> In a navigation chart a distance of 49 NM is equal to 7 cm. The scale of the chart is approximately?", ans: "d) 1 : 1 300 000." },
+            { q: "<strong>Q6.</strong> On a direct Mercator projection, at latitude 45&deg; North, a certain length represents 70 NM. At latitude 30&deg; North, the same length represents approximately?", ans: "a) 86 nm." },
+            { q: "<strong>Q7.</strong> At 60&deg; N the scale of a direct Mercator chart is 1 : 3 000 000. What is the scale at the equator?", ans: "d) 1 : 6 000 000." },
+            { q: "<strong>Q8.</strong> What is the chart distance between longitudes 179&deg;E and 175&deg;W on a direct Mercator chart with a scale of 1 : 5 000 000 at the equator?", ans: "a) 133 mm." },
+            { q: "<strong>Q9.</strong> At 47&deg; North the chart distance between meridians 10&deg; apart is 5 inches. The scale of the chart at 47&deg; North approximates?", ans: "b) 1 : 6 000 000." },
+            { q: "<strong>Q10.</strong> Approximately how many nautical miles correspond to 12 cm on a map with a scale of 1 : 2 000 000?", ans: "a) 130 nm." },
+            { q: "<strong>Q11.</strong> The total length of the 53&deg;N parallel of latitude on a direct Mercator chart is 133 cm. What is the approximate scale of the chart at latitude 30&deg;S?", ans: "a) 1 : 26 000 000." },
+            { q: "<strong>Q12.</strong> A straight line on a chart 4.89 cm long represents 185 NM. The scale of this chart is approximately?", ans: "d) 1 : 7 000 000." },
+            { q: "<strong>Q13.</strong> On a Direct Mercator chart at latitude 15&deg;S, a certain length represents a distance of 120 NM on the earth. The same length on the chart will represent on the earth, at latitude 10&deg;N, a distance of?", ans: "a) 122.3 nm." },
+            { q: "<strong>Q14.</strong> On a Direct Mercator chart at latitude of 45&deg;N, a certain length represents a distance of 90 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "b) 110 nm." },
+            { q: "<strong>Q15.</strong> On a chart, the distance along a meridian between latitudes 45&deg;N and 46&deg;N is 6 cm. The scale of the chart is approximately?", ans: "a) 1 : 1 850 000." },
+            { q: "<strong>Q16.</strong> Given: Chart scale is 1 : 1 850 000. The chart distance between two points is 4 centimetres. Earth distance is approximately?", ans: "a) 40 nm." },
+            { q: "<strong>Q17.</strong> On a Mercator chart, at latitude 60&deg;N, the distance measured between W002&deg; and E008&deg; is 20 cm. The scale of this chart at latitude 60&deg;N is approximately?", ans: "a) 1 : 2 780 000." },
+            { q: "<strong>Q18.</strong> Assume a Mercator chart. The distance between positions A and B, located on the same parallel and 10&deg; longitude apart, is 6 cm. The scale at the parallel is 1 : 9 260 000. What is the latitude of A and B?", ans: "b) 60&deg; N or S." },
+            { q: "<strong>Q19.</strong> A course of 120&deg;(T) is drawn between 'X' (61&deg;30'N) and 'Y' (58&deg;30'N) on a Lambert Conformal conic chart with a scale of 1 : 1 000 000 at 60&deg;N. The chart distance between 'X' and 'Y' is?", ans: "c) 66.7 cm." },
+            { q: "<strong>Q20.</strong> Given: Direct Mercator chart with a scale of 1 : 200 000 at equator; Chart length from 'A' to 'B', in the vicinity of the equator, 11 cm. What is the approximate distance from 'A' to 'B'?", ans: "a) 12 nm." },
+            { q: "<strong>Q21.</strong> Approximately how many nautical miles correspond to 15 cm on a map with a scale of 1 : 3 000 000?", ans: "b) 243 nm." },
+            { q: "<strong>Q22.</strong> Approximately how many nautical miles correspond to 20 cm on a map with a scale of 1 : 2 000 000?", ans: "a) 216 nm." },
+            { q: "<strong>Q23.</strong> Approximately how many nautical miles correspond to 10 cm on a map with a scale of 1 : 5 000 000?", ans: "b) 270 nm." },
+            { q: "<strong>Q24.</strong> Approximately how many nautical miles correspond to 35 cm on a map with a scale of 1 : 500 000?", ans: "d) 94.5 nm." },
+            { q: "<strong>Q25.</strong> The total length of the 75&deg;N parallel of latitude on a direct Mercator chart is 140 cm. What is the approximate scale of the chart at latitude 30&deg;S?", ans: "d) 1 : 6 000 000." },
+            { q: "<strong>Q26.</strong> The total length of the 70&deg;N parallel of latitude on a direct Mercator chart is 120 cm. What is the approximate scale of the chart at latitude 40&deg;S?", ans: "a) 1 : 16 050 000." },
+            { q: "<strong>Q27.</strong> The total length of the 45&deg;N parallel of latitude on a direct Mercator chart is 200 cm. What is the approximate scale of the chart at latitude 60&deg;N?", ans: "d) 1 : 25 500 000." },
+            { q: "<strong>Q28.</strong> What is the chart distance between longitudes 179&deg;E and 175&deg;W on a direct Mercator chart with a scale of 1 : 15 000 000 at the equator?", ans: "c) 44 mm." },
+            { q: "<strong>Q29.</strong> What is the chart distance between longitudes 165&deg;E and 175&deg;W on a direct Mercator chart with a scale of 1 : 25 000 000 at the equator?", ans: "d) 89 mm." },
+            { q: "<strong>Q30.</strong> What is the chart distance between longitudes 170&deg;E and 170&deg;W on a direct Mercator chart with a scale of 1 : 20 000 000 at the equator?", ans: "b) 111 mm." },
+            { q: "<strong>Q31.</strong> What is the chart distance between longitudes 175&deg;E and 175&deg;W on a direct Mercator chart with a scale of 1 : 7 000 000 at the equator?", ans: "a) 159 mm." },
+            { q: "<strong>Q32.</strong> What is the chart distance between longitudes 179&deg;E and 179&deg;W on a direct Mercator chart with a scale of 1 : 1 500 000 at the equator?", ans: "b) 176 mm." },
+            { q: "<strong>Q33.</strong> What is the chart distance between longitudes 176&deg;E and 176&deg;W on a direct Mercator chart with a scale of 1 : 4 000 000 at the equator?", ans: "a) 222 mm." },
+            { q: "<strong>Q34.</strong> Given: Chart scale is 1 : 2 000 000. The chart distance between two points is 4 centimetres. Earth distance is approximately?", ans: "b) 43 nm." },
+            { q: "<strong>Q35.</strong> Given: Chart scale is 1 : 3 000 000. The chart distance between two points is 24 centimetres. Earth distance is approximately?", ans: "b) 389 nm." },
+            { q: "<strong>Q36.</strong> Given: Chart scale is 1 : 5 000 000. The chart distance between two points is 10 centimetres. Earth distance is approximately?", ans: "d) 270 nm." },
+            { q: "<strong>Q37.</strong> Given: Chart scale is 1 : 250 000. The chart distance between two points is 4 centimetres. Earth distance is approximately?", ans: "b) 5.4 nm." },
+            { q: "<strong>Q38.</strong> Given: Chart scale is 1 : 200 000. The chart distance between two points is 12 centimetres. Earth distance is approximately?", ans: "b) 13 nm." },
+            { q: "<strong>Q39.</strong> On a Direct Mercator chart at latitude of 40&deg;N, a certain length represents a distance of 90 NM on the earth. The same length on the chart will represent on the earth, at latitude 20&deg;N, a distance of?", ans: "b) 110 nm." },
+            { q: "<strong>Q40.</strong> On a Direct Mercator chart at latitude of 70&deg;N, a certain length represents a distance of 90 NM on the earth. The same length on the chart will represent on the earth, at latitude 10&deg;N, a distance of?", ans: "a) 259 nm." },
+            { q: "<strong>Q41.</strong> On a Direct Mercator chart at latitude of 85&deg;N, a certain length represents a distance of 60 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "d) 596 nm." },
+            { q: "<strong>Q42.</strong> On a Direct Mercator chart at latitude of 45&deg;N, a certain length represents a distance of 90 NM on the earth. The same length on the chart will represent on the earth, at latitude 60&deg;N, a distance of?", ans: "b) 65 nm." },
+            { q: "<strong>Q43.</strong> On a Direct Mercator chart at latitude of 45&deg;N, a certain length represents a distance of 25 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "a) 30 nm." },
+            { q: "<strong>Q44.</strong> On a Direct Mercator chart at latitude of 75&deg;N, a certain length represents a distance of 75 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "d) 25 nm." },
+            { q: "<strong>Q45.</strong> The scale on a Lambert's conformal conic chart?", ans: "b) Is constant along a parallel of latitude." },
+            { q: "<strong>Q46.</strong> The scale is correct on a Transverse Mercator chart?", ans: "c) Along the great circle of tangency." },
+            { q: "<strong>Q47.</strong> The nominal scale of a Lambert conformal conic chart is the?", ans: "a) Scale at the standard parallels." },
+            { q: "<strong>Q48.</strong> On a direct Mercator projection, at latitude 45&deg; North, a certain length represents 70 NM. At latitude 40&deg; North, the same length represents approximately?", ans: "b) 75 nm." },
+            { q: "<strong>Q49.</strong> At 60&deg; N the scale of a direct Mercator chart is 1 : 4 000 000. What is the scale at the equator?", ans: "d) 1 : 8 000 000." },
+            { q: "<strong>Q50.</strong> What is the chart distance between longitudes 179&deg;E and 175&deg;W on a direct Mercator chart with a scale of 1 : 2 000 000 at the equator?", ans: "a) 333 mm." },
+            { q: "<strong>Q51.</strong> At 47&deg; North the chart distance between meridians 10&deg; apart is 6 inches. The scale of the chart at 47&deg; North approximates?", ans: "d) 1 : 5 000 000." },
+            { q: "<strong>Q52.</strong> Approximately how many nautical miles correspond to 15 cm on a map with a scale of 1 : 2 000 000?", ans: "a) 162 nm." },
+            { q: "<strong>Q53.</strong> The total length of the 53&deg;N parallel of latitude on a direct Mercator chart is 127 cm. What is the approximate scale of the chart at latitude 30&deg;S?", ans: "a) 1 : 27 300 000." },
+            { q: "<strong>Q54.</strong> A straight line on a chart 4.89 cm long represents 100 NM. The scale of this chart is approximately?", ans: "b) 1 : 3 500 000." },
+            { q: "<strong>Q55.</strong> On a Direct Mercator chart at latitude 15&deg;S, a certain length represents a distance of 130 NM on the earth. The same length on the chart will represent on the earth, at latitude 10&deg;N, a distance of?", ans: "a) 132.5 nm." },
+            { q: "<strong>Q56.</strong> Given: Direct Mercator chart with a scale of 1 : 200 000 at equator; Chart length from 'A' to 'B', in the vicinity of the equator, 27 cm. What is the approximate distance from 'A' to 'B'?", ans: "a) 29 nm." },
+            { q: "<strong>Q57.</strong> Approximately how many nautical miles correspond to 25 cm on a map with a scale of 1 : 3 000 000?", ans: "b) 405 nm." },
+            { q: "<strong>Q58.</strong> Approximately how many nautical miles correspond to 13 cm on a map with a scale of 1 : 2 000 000?", ans: "a) 140 nm." },
+            { q: "<strong>Q59.</strong> Approximately how many nautical miles correspond to 9 cm on a map with a scale of 1 : 5 000 000?", ans: "b) 243 nm." },
+            { q: "<strong>Q60.</strong> Approximately how many nautical miles correspond to 7 cm on a map with a scale of 1 : 1 500 000? (Note: image shows 1: 500 000 calculation)", ans: "a) 19 nm." },
+            { q: "<strong>Q61.</strong> The total length of the 75&deg;N parallel of latitude on a direct Mercator chart is 115 cm. What is the approximate scale of the chart at latitude 30&deg;S?", ans: "a) 1 : 30 000 000." },
+            { q: "<strong>Q62.</strong> The total length of the 70&deg;N parallel of latitude on a direct Mercator chart is 95 cm. What is the approximate scale of the chart at latitude 40&deg;S?", ans: "a) 1 : 32 250 000." },
+            { q: "<strong>Q63.</strong> The total length of the 45&deg;N parallel of latitude on a direct Mercator chart is 85 cm. What is the approximate scale of the chart at latitude 60&deg;N?", ans: "Approx 1 : 23 500 000" },
+            { q: "<strong>Q64.</strong> On a direct Mercator projection, the distance measured between two meridians spaced 5&deg; apart at latitude 60&deg;N is 12 cm. The scale of this chart at latitude 60&deg;N is approximately?", ans: "a) 1 : 2 300 000." },
+            { q: "<strong>Q65.</strong> On a Lambert Conformal chart the distance between meridians 5&deg; apart along latitude 37&deg; North is 11cm. The scale of the chart at that parallel approximates?", ans: "b) 1 : 4 000 000." },
+            { q: "<strong>Q66.</strong> A Mercator chart has a scale at the equator = 1 : 3 000 000. What is the scale at latitude 60&deg; S?", ans: "c) 1 : 1 500 000." },
+            { q: "<strong>Q67.</strong> A straight line drawn on a chart measures 4.63 cm and represents 125 NM. The chart scale is?", ans: "a) 1 : 5 000 000." },
+            { q: "<strong>Q68.</strong> In a navigation chart a distance of 55 NM is equal to 7 cm. The scale of the chart is approximately?", ans: "d) 1 : 1 500 000." },
+            { q: "<strong>Q69.</strong> On a direct Mercator projection, at latitude 45&deg; North, a certain length represents 79 NM. At latitude 30&deg; North, the same length represents approximately?", ans: "a) 97 nm." },
+            { q: "<strong>Q70.</strong> At 60&deg; N the scale of a direct Mercator chart is 1 : 3 500 000. What is the scale at the equator?", ans: "d) 1 : 7 000 000." },
+            { q: "<strong>Q71.</strong> A Mercator chart has a scale at the equator = 1 : 2 400 000. What is the scale at latitude 60&deg; S?", ans: "c) 1 : 1 200 000." },
+            { q: "<strong>Q72.</strong> A straight line drawn on a chart measures 4.5 cm and represents 125 NM. The chart scale is?", ans: "a) 1 : 5 100 000." },
+            { q: "<strong>Q73.</strong> In a navigation chart a distance of 55 NM is equal to 14 cm. The scale of the chart is approximately?", ans: "d) 1 : 725 000." },
+            { q: "<strong>Q74.</strong> On a direct Mercator projection, at latitude 45&deg; North, a certain length represents 98 NM. At latitude 30&deg; North, the same length represents approximately?", ans: "a) 120 nm." },
+            { q: "<strong>Q75.</strong> At 60&deg; N the scale of a direct Mercator chart is 1 : 2 750 000. What is the scale at the equator?", ans: "d) 1 : 5 500 000." },
+            { q: "<strong>Q76.</strong> On a Direct Mercator chart at latitude of 70&deg;N, a certain length represents a distance of 120 NM on the earth. The same length on the chart will represent on the earth, at latitude 10&deg;N, a distance of?", ans: "b) 346 nm." },
+            { q: "<strong>Q77.</strong> On a Direct Mercator chart at latitude of 85&deg;N, a certain length represents a distance of 98 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "d) 974 nm." },
+            { q: "<strong>Q78.</strong> On a Direct Mercator chart at latitude of 45&deg;N, a certain length represents a distance of 96 NM on the earth. The same length on the chart will represent on the earth, at latitude 60&deg;N, a distance of?", ans: "b) 68 nm." },
+            { q: "<strong>Q79.</strong> On a Direct Mercator chart at latitude of 45&deg;N, a certain length represents a distance of 39 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "b) 48 nm." },
+            { q: "<strong>Q80.</strong> On a Direct Mercator chart at latitude of 75&deg;N, a certain length represents a distance of 55 NM on the earth. The same length on the chart will represent on the earth, at latitude 30&deg;N, a distance of?", ans: "d) 184 nm." }
+        ];
+
+        let currentNumIndex = 0;
+
+        function startNumericals() {
+            switchView('numerical-page');
+            currentNumIndex = 0;
+            renderNumerical();
+        }
+
+        function renderNumerical() {
+            if (numericalsData.length === 0) return;
+            const qData = numericalsData[currentNumIndex];
+            
+            document.getElementById('num-counter').innerText = `Calculation Q${currentNumIndex + 1} of ${numericalsData.length}`;
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / numericalsData.length) * 100}%`;
+            document.getElementById('num-q-text').innerHTML = qData.q;
+            
+            const ansBox = document.getElementById('num-ans-box');
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`;
+            ansBox.style.display = 'none'; // Hide by default
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0;
+            document.getElementById('num-next-btn').disabled = currentNumIndex === numericalsData.length - 1;
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

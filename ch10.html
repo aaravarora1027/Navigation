@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 10 | Solar System & Time</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 25px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        
+        .mcq-options { display: flex; flex-direction: column; gap: 10px; }
+        .mcq-option { background-color: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 15px 20px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 1.05rem; transition: all 0.2s; }
+        .mcq-option:hover:not(.disabled) { background-color: var(--accent); }
+        .mcq-option.disabled { cursor: default; }
+        .mcq-option.correct { background-color: var(--correct-bg); border-color: var(--correct-border); }
+        .mcq-option.wrong { background-color: var(--wrong-bg); border-color: var(--wrong-border); }
+        
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; margin-bottom: 15px; }
+        .feedback-solution { display: block; background-color: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); padding: 20px; font-size: 1.05rem; font-weight: normal; }
+        
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 10: Solar System & Time</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="startQuiz()">
+                    <h3>Quiz Engine</h3>
+                    <p>Booklet Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals Engine</h3>
+                    <p>Class Calculations & Time Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUIZ ENGINE -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Theory Question 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Quiz</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            
+            <div class="content-area">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="mcq-options" id="quiz-options"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- NUMERICALS ENGINE -->
+        <div id="numerical-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Calculation 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; border-color: #555;" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box feedback-solution" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // QUIZ DATA (Booklet MCQs 1-20)
+        // ==========================================
+        const quizData = [
+            { q: "Sun will appear at same latitude:", options: ["a) Once a year", "b) Twice a year", "c) Once a day"], correct: 1 },
+            { q: "Seasons are due to the:", options: ["a) Earth's elliptical orbit around the Sun", "b) inclination of the polar axis with the ecliptic plane", "c) Earth's rotation on its polar axis"], correct: 1 },
+            { q: "At what approximate date is the earth furthest from the sun (aphelion)?", options: ["a) Beginning of January", "b) End of December", "c) Beginning of July"], correct: 2 },
+            { q: "At what approximate date is the earth closest to the sun (perihelion)?", options: ["a) End of June", "b) Beginning of July", "c) Beginning of January"], correct: 2 },
+            { q: "What is the highest latitude listed below at which the sun will reach an altitude of 90&deg; above the horizon at some time during the year?", options: ["a) 23&deg;", "b) 45&deg;", "c) 66&deg;"], correct: 0 },
+            { q: "Which is the highest latitude listed below at which the sun will rise above the horizon and set every day?", options: ["a) 72&deg;", "b) 68&deg;", "c) 66&deg;"], correct: 2 },
+            { q: "The angle between the plane of the ecliptic and the plane of equator is approximately:", options: ["a) 66.5&deg;", "b) 23.5&deg;", "c) 27.5&deg;"], correct: 1 },
+            { q: "In its path around the Sun, the axis of the Earth has an inclination:", options: ["a) of 66&deg; 33' with the plane of the path.", "b) varying between zero and 23&deg; 27' with the plane of the path.", "c) varying with the season of the year."], correct: 0 },
+            { q: "The mean sun:", options: ["a) Is only of interest to users of astronomical navigation.", "b) Moves with constant speed along the celestial equator.", "c) Is the middle position of the sun."], correct: 1 },
+            { q: "The direction of the Earths rotation on its axis is such that:", options: ["a) Observed from the point above the North Pole, the rotation is counter-clockwise.", "b) Any point on the surface of the Earth will move eastward.", "c) Any point on the surface of the Earth will move westward."], correct: 0 },
+            { q: "When the length of the day is measured with reference to the passage of the apparent sun:", options: ["a) The length of the day will be the same once every month.", "b) The length of the day will vary with the latitude of the observer.", "c) The length of the day will vary in the course of the year."], correct: 2 },
+            { q: "All heavenly bodies rise", options: ["a) In the East.", "b) In the West.", "c) Some in the East and some in the West depending upon the hemisphere."], correct: 0 },
+            { q: "The term Aphelion is used to describe:", options: ["a) The relative position between the earth and the moon.", "b) The situation when the distance between the sun and the earth is at its longest.", "c) The relationship between the length of the day and the length of the night."], correct: 1 },
+            { q: "In which two months of the year is the difference between the transit of apparent Sun and mean Sun across Greenwich meridian is greatest:", options: ["a) January and October", "b) June and December", "c) February and November"], correct: 2 },
+            { q: "The duration of civil twilight is the time:", options: ["a) needed by the sun to move from the apparent height of 0&deg; to the apparent height of 6&deg;", "b) between sunset and when the centre of the sun is 12&deg; below the true horizon", "c) between sunset and when the centre of the sun is 6&deg; below the true horizon"], correct: 2 },
+            { q: "Atmospheric refraction:", options: ["a) cause the sunrise to occur earlier and the sunset to occur later.", "b) causes the sunrise and the sunset to occur earlier.", "c) causes the sunrise to occur later and the sunset to occur earlier."], correct: 0 },
+            { q: "The times given for sunrise, sunset, morning and evening twilight in the air almanac:", options: ["a) are given in UTC.", "b) are given in standard time.", "c) are given in LMT."], correct: 2 },
+            { q: "Civil twilight is defined by:", options: ["a) sun upper edge tangential to horizon.", "b) sun altitude is 6&deg; below the celestial horizon.", "c) sun altitude is 18&deg; below the celestial horizon."], correct: 1 },
+            { q: "What is the reason for seasonal changes in climate?", options: ["a) Because the Earth's spin axis is inclined to the plane of its orbit round the Sun.", "b) Because the distance between the Earth and the Sun varies over a year.", "c) Because the Earth's orbital speed round the sun varies according to the time of the year."], correct: 0 },
+            { q: "The main reason that day and night, throughout the year, have different duration, is due to the?", options: ["a) Relative speed of the sun along the ecliptic.", "b) Inclination of the ecliptic to the equator.", "c) Earth's rotation."], correct: 1 },
+            { q: "<strong>Booklet Q1.</strong> In which months is the difference between apparent noon and mean noon the greatest?", options: ["a. March and September.", "b. June and December.", "c. November and February.", "d. January and July."], correct: 2 },
+    { q: "<strong>Booklet Q2.</strong> What is the reason for seasonal changes in climate?", options: ["a. Because the Earth's spin axis is inclined to the plane of its orbit round the Sun.", "b. Because the distance between the Earth and the Sun varies over a year.", "c. Because the Earth's orbital speed round the Sun varies according to the time of the year.", "d. Because of the difference between the Tropical Year and the Calendar year."], correct: 0 },
+    { q: "<strong>Booklet Q3.</strong> How would you define standard time in relation to UTC?", options: ["a. It is local time.", "b. It is local time adjusted to whole or half hours difference from UTC.", "c. It is based on local sunrise and sunset.", "d. It is another term for UTC."], correct: 1 },
+    { q: "<strong>Booklet Q5.</strong> The main reason that day and night, throughout the year, have different duration, is due to the?", options: ["a. Relative speed of the sun along the ecliptic.", "b. Inclination of the ecliptic to the equator.", "c. Earth's rotation.", "d. Gravitational effect of the sun and moon on the speed of rotation of the Earth."], correct: 1 },
+    { q: "<strong>Booklet Q9.</strong> The angle between the plane of the ecliptic and the plane of equator is approximately?", options: ["a. 27.5&deg;.", "b. 66.5&deg;.", "c. 23.5&deg;.", "d. 25.3&deg;."], correct: 2 },
+    { q: "<strong>Booklet Q10.</strong> At what approximate date is the earth furthest from the sun (aphelion)?", options: ["a. Beginning of July.", "b. End of September.", "c. Beginning of January.", "d. End of December."], correct: 0 },
+    { q: "<strong>Booklet Q11.</strong> At what times of the year does the length of the hours of daylight change most rapidly?", options: ["a. Autumn Equinox and Winter Solstice.", "b. Spring (Vernal) Equinox and Autumn Equinox.", "c. Summer Solstice and Winter Solstice.", "d. Spring (Vernal) Equinox and Summer Solstice."], correct: 1 },
+    { q: "<strong>Booklet Q12.</strong> Civil Twilight occurs between?", options: ["a. Sunrise and sunset.", "b. Sunset and when the sun is 6&deg; below the horizon.", "c. The times when the sun is between 6&deg; and 12&deg; below the horizon.", "d. The times when the sun is between 12&deg; and 18&deg; below the horizon."], correct: 1 },
+    { q: "<strong>Booklet Q13.</strong> What is the highest latitude on the Earth at which the sun can be vertically overhead?", options: ["a. 23.2&deg;.", "b. 66.2&deg;.", "c. 45.0&deg;.", "d. 90.0&deg;."], correct: 0 },
+    { q: "<strong>Booklet Q19.</strong> The angle between the plane of the ecliptic and the plane of equator is approximately?", options: ["a. 66.5&deg;.", "b. 90.0&deg;.", "c. 23.5&deg;.", "d. 32.5&deg;."], correct: 2 },
+    { q: "<strong>Booklet Q20.</strong> The duration of civil twilight is the time?", options: ["a. Between Sunset and when the centre of the sun is 6&deg; below the true horizon.", "b. Between Sunset and when the top of the Sun is 6&deg; below the visual horizon.", "c. Between sunset and when the centre of the Sun is 6&deg; below the visual horizon.", "d. When the Sunset and Sunrise."], correct: 0 },
+    { q: "<strong>Booklet Q22.</strong> Which is the highest latitude listed below at which the sun will rise above the horizon and set every day?", options: ["a. 66&deg;.", "b. 23.5&deg;.", "c. 32.5&deg;.", "d. The tropics of Cancer and Capricorn."], correct: 0 },
+    { q: "<strong>Booklet Q27.</strong> What is the meaning of the term 'standard time'?", options: ["a. It is the time set by the legal authorities for a country or part of a country.", "b. It is just another term for UTC.", "c. It is time related to the Prime meridian.", "d. It is constant at all points on the earth."], correct: 0 },
+    { q: "<strong>Booklet Q29.</strong> The main reason that day and night, throughout the year, have different duration, is due to the?", options: ["a. The changing distance between the Sun and the Earth.", "b. The changing speed of rotation of the Earth.", "c. The changing shape of the orbit of the Earth around the Sun.", "d. The inclination of the ecliptic to the equator."], correct: 3 },
+    { q: "<strong>Booklet Q30.</strong> In which two months of the year is the difference between the transit of the Apparent Sun and Mean Sun across the Greenwich Meridian the greatest?", options: ["a. February and November.", "b. March and July.", "c. June and December.", "d. January and August."], correct: 0 },
+    { q: "<strong>Booklet Q31.</strong> What is the highest latitude listed below at which the sun will reach an angle of 90&deg; above the horizon at some time during the year?", options: ["a. 23&deg;.", "b. 32&deg;.", "c. 66&deg;.", "d. 60&deg;."], correct: 0 },
+    { q: "<strong>Booklet Q32.</strong> Assuming mid-latitudes (40&deg; to 50&deg;N/S). At which time of year is the relationship between the length of day and night, as well as the rate of change of declination of the sun, changing at the greatest rate?", options: ["a. Winter Solstice.", "b. Spring equinox and autumn equinox.", "c. Summer solstice.", "d. Mid July."], correct: 1 },
+    { q: "<strong>Booklet Q33.</strong> At what approximate date is the earth closest to the sun (perihelion)?", options: ["a. 21 March.", "b. 21 September.", "c. Middle of June.", "d. Beginning of January."], correct: 3 },
+    { q: "<strong>Booklet Q34.</strong> At what approximate date is the earth furthest from the sun (aphelion)?", options: ["a. Beginning of July.", "b. Beginning of January.", "c. 21 March.", "d. 21 August."], correct: 0 },
+    { q: "<strong>Booklet Q38.</strong> At which of the following latitudes does the maximum difference between geodetic and geocentric latitude occur?", options: ["a. 00&deg;", "b. 60&deg;", "c. 45&deg;", "d. 90&deg;"], correct: 2 },
+    { q: "<strong>Booklet Q39.</strong> When standing at the South Pole in which direction will you be facing?", options: ["a. North.", "b. South.", "c. East.", "d. West."], correct: 0 }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizAnswers = new Array(quizData.length).fill(null);
+
+        function startQuiz() {
+            switchView('quiz-page');
+            currentQuizIndex = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            if (quizData.length === 0) return;
+            const qData = quizData[currentQuizIndex];
+            
+            document.getElementById('quiz-counter').innerText = `Theory Q${currentQuizIndex + 1} of ${quizData.length}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuizIndex + 1) / quizData.length) * 100}%`;
+            document.getElementById('quiz-q-text').innerHTML = `<strong>Q${currentQuizIndex + 1}.</strong> ` + qData.q;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            const hasAnswered = quizAnswers[currentQuizIndex] !== null;
+            
+            qData.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'mcq-option';
+                btn.innerHTML = optText;
+                
+                if (hasAnswered) {
+                    btn.classList.add('disabled');
+                    if (index === qData.correct) {
+                        btn.classList.add('correct');
+                    } else if (index === quizAnswers[currentQuizIndex]) {
+                        btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => selectQuizOption(index);
+                }
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQuizIndex === 0;
+            document.getElementById('quiz-next-btn').disabled = currentQuizIndex === quizData.length - 1;
+        }
+
+        function selectQuizOption(selectedIndex) {
+            quizAnswers[currentQuizIndex] = selectedIndex;
+            renderQuiz();
+        }
+
+        function goPrevQuiz() { if (currentQuizIndex > 0) { currentQuizIndex--; renderQuiz(); } }
+        function goNextQuiz() { if (currentQuizIndex < quizData.length - 1) { currentQuizIndex++; renderQuiz(); } }
+
+
+        // ==========================================
+        // NUMERICALS DATA (Class calculations)
+        // ==========================================
+        const numericalsData = [
+            { 
+                q: "<strong>Q1.</strong> Convert 137&deg;26' longitude to equivalent time.", 
+                ans: "9 hr 10 mins",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Divide the degrees by 15:<br>137&deg; / 15 = 9 hours with 2 degrees remaining.<br>2 degrees = 120 minutes.<br><br>2. Process the minutes of arc:<br>Total minutes of arc = 120' + 26' = 146'.<br>146' / 15 = 9.73 minutes of time (approx 10 minutes).<br><br>3. Total Time:<br>9 hours + 10 minutes = <strong>9 hr 10 mins</strong>."
+            },
+            { 
+                q: "<strong>Q2.</strong> Longitude = 120&deg;E.<br>LMT = 03rd 0218 hrs.<br>Find UTC.", 
+                ans: "02nd 1818 hrs",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Time Difference (Arc to Time):</strong><br>120&deg; / 15 = 8 hours.<br><br>2. <strong>Determine direction (LMT to UTC):</strong><br>Longitude is East. \"Longitude East, Local Time is Least\" (Actually, LMT is ahead of UTC in the East).<br>Therefore, UTC = LMT - 8 hours.<br><br>3. <strong>Calculate Time:</strong><br>03rd 0218 hrs - 8 hours = <strong>02nd 1818 hrs</strong>."
+            },
+            { 
+                q: "<strong>Q3.</strong> Longitude = 75&deg;W.<br>LMT = 03rd 0150 hrs.<br>Find UTC.", 
+                ans: "03rd 0650 hrs",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Time Difference:</strong><br>75&deg; / 15 = 5 hours.<br><br>2. <strong>Determine direction (LMT to UTC):</strong><br>Longitude is West. LMT is behind UTC.<br>Therefore, UTC = LMT + 5 hours.<br><br>3. <strong>Calculate Time:</strong><br>0150 + 0500 = <strong>03rd 0650 hrs</strong>."
+            },
+            { 
+                q: "<strong>Q4.</strong> Longitude = 62&deg;15'E.<br>LMT = 17th 2315 hrs.<br>Find UTC.", 
+                ans: "17th 1906 hrs",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Time Difference:</strong><br>62&deg;15' / 15 = 4 hours 9 minutes.<br><br>2. <strong>Determine direction:</strong><br>Longitude is East. LMT is ahead of UTC.<br>Therefore, UTC = LMT - 4 hours 9 mins.<br><br>3. <strong>Calculate Time:</strong><br>2315 hrs - 0409 hrs = <strong>17th 1906 hrs</strong>."
+            },
+            { 
+                q: "<strong>Q5.</strong> UTC = 28th 0902 hrs.<br>Longitude = 110&deg;53'W.<br>Find LMT.", 
+                ans: "28th 0138 hrs",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Time Difference:</strong><br>110&deg;53' / 15 = 7 hours 24 mins (approx).<br><br>2. <strong>Determine direction (UTC to LMT):</strong><br>Longitude is West. LMT is behind UTC.<br>Therefore, LMT = UTC - 7 hours 24 mins.<br><br>3. <strong>Calculate Time:</strong><br>0902 hrs - 0724 hrs = <strong>28th 0138 hrs</strong>."
+            },
+            { 
+                q: "<strong>Q6.</strong> A/C left position A at longitude 164&deg;W, LMT 03rd 2200 hrs.<br>Find LMT & date of arrival at B 173&deg;E if flight time is 6 hrs.", 
+                ans: "05th 0228 hrs",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Convert Departure LMT to UTC:</strong><br>Time diff at A = 164&deg;W / 15 = 10 hrs 56 mins.<br>Since A is West, UTC is ahead: 2200 + 1056 = 04th 0856 hrs UTC.<br><br>2. <strong>Add Flight Time:</strong><br>Arrival UTC = 04th 0856 hrs + 6 hrs = 04th 1456 hrs UTC.<br><br>3. <strong>Convert Arrival UTC to LMT at B:</strong><br>Time diff at B = 173&deg;E / 15 = 11 hrs 32 mins.<br>Since B is East, LMT is ahead of UTC: 1456 + 1132 = 2628 (which is 0228 the next day).<br>LMT at B = <strong>05th 0228 hrs</strong>."
+            },
+            { 
+                q: "<strong>Q7.</strong> Position A = 40&deg;S 137&deg;E.<br>Find Zone Number.", 
+                ans: "Zone 9 (East)",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Calculate basic offset:</strong><br>137&deg; / 15 = 9.133.<br><br>2. <strong>Round to nearest whole number:</strong><br>Since it is closer to 9 than 10, the Zone Number is <strong>9</strong>."
+            },
+            { 
+                q: "<strong>Q8.</strong> Position B = 60&deg;N 97&deg;30'W.<br>Find Zone Number.", 
+                ans: "Zone 7 (West)",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Calculate basic offset:</strong><br>97.5&deg; / 15 = 6.5.<br><br>2. <strong>Round up for halves:</strong><br>6.5 rounds up to Zone Number <strong>7</strong>."
+            },
+            { 
+                q: "<strong>Q9.</strong> Position C = 10&deg;S 130&deg;E.<br>Zone time = 01st 0600 (Jan).<br>Find UTC.", 
+                ans: "31st 2100 (December)",
+                sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. <strong>Find Zone Number:</strong><br>130&deg; / 15 = 8.66. Rounds up to Zone 9.<br><br>2. <strong>Apply Zone calculation:</strong><br>Since it is East, Zone Time is ahead of UTC by 9 hours.<br>UTC = Zone Time - 9 hours.<br><br>3. <strong>Calculate Time:</strong><br>01st Jan 0600 hrs - 9 hours rolls back into the previous day/month.<br>UTC = <strong>31st Dec 2100 hrs</strong>."
+            },
+            { 
+        q: "<strong>Booklet Q4.</strong> A time difference of 5 hours 20 minutes and 20 seconds is equivalent to which change of longitude?", 
+        ans: "d. 80&deg; 05'.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Hours to Longitude: 5 hrs &times; 15&deg; = 75&deg;.<br>2. Minutes to Longitude: 20 mins / 4 = 5&deg;.<br>3. Seconds to Arc Minutes: 20 secs / 4 = 5'.<br>4. Total Longitude: 75&deg; + 5&deg; + 5' = <strong>80&deg; 05'</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q6.</strong> The sun rises at 50&deg; N and 025&deg;E on the 25th January at 0254 UTC. On the same day what time does it rise at 50&deg; N and 040&deg;W?", 
+        ans: "c. 0714 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 025&deg;E to 040&deg;W = 65&deg; difference.<br>2. Convert to Time: 65&deg; / 15 = 4 hours 20 mins.<br>3. Determine Direction: Since 040&deg;W is West of 025&deg;E, sunrise happens later in UTC.<br>4. Calculate: 0254 + 0420 = <strong>0714 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q7.</strong> On the 27th of February, at 52&deg;S and 040&deg;E. the sunrise is at 0243 UTC. On the same day, at 52&deg;S and 035&deg;W, the sunrise is at?", 
+        ans: "c. 0743 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 040&deg;E to 035&deg;W = 75&deg; difference.<br>2. Convert to Time: 75&deg; / 15 = 5 hours exact.<br>3. Determine Direction: West is later in UTC.<br>4. Calculate: 0243 + 0500 = <strong>0743 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q8.</strong> On the 27th of February, at 55&deg;S and 020&deg;W. The sunrise is at 0250 UTC. On the same day, at 55&deg;S and 075&deg;W, the sunrise is at?", 
+        ans: "a. 0630 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 020&deg;W to 075&deg;W = 55&deg; difference.<br>2. Convert to Time: 55&deg; / 15 = 3 hours 40 mins.<br>3. Determine Direction: Moving further West means later in UTC.<br>4. Calculate: 0250 + 0340 = <strong>0630 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q14.</strong> The UTC of the end of evening civil twilight in position 51&deg;N 008&deg;W on 15 August is?", 
+        ans: "b. 1958.",
+        sol: "<em>Note: This requires referencing the Air Almanac for 51&deg;N on August 15th to find LMT, then applying the 8&deg;W arc-to-time conversion (+32 mins) to find UTC. Standard DGCA key answer is 1958.</em>"
+    },
+    { 
+        q: "<strong>Booklet Q21.</strong> On the 27th of February, at 52&deg;S and 034&deg;W, the sunrise is at 0743 UTC. On the same day, at 52&deg;S and 040&deg;E, the sunrise is at?", 
+        ans: "a. 0243 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 034&deg;W to 040&deg;E = 74&deg; difference (approx 75&deg; for calculation simplicity based on answer choices).<br>2. Convert to Time: 75&deg; / 15 = 5 hours.<br>3. Determine Direction: Moving East means it happened earlier in UTC.<br>4. Calculate: 0743 - 0500 = <strong>0243 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q23.</strong> The UTC of sunrise on 6 December at WINNIPEG (Canada) (49&deg;50'N 097&deg;30'W) is?", 
+        ans: "c. 1411.",
+        sol: "<em>Note: This requires an Air Almanac. Standard reference for 49&deg;50'N in December yields a late LMT sunrise. Converting 097&deg;30'W to time (+6 hrs 30 mins to LMT) gives 1411 UTC.</em>"
+    },
+    { 
+        q: "<strong>Booklet Q28.</strong> What is the local mean time, position 65&deg;25'N 123&deg;45'W at 2200 UTC?", 
+        ans: "c. 1345.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Convert Longitude to Time: 123&deg;45'W / 15 = 8 hours 15 mins.<br>2. Determine Direction: West is behind UTC.<br>3. Calculate LMT: 2200 UTC - 0815 = <strong>1345 LMT</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q36.</strong> What is the UTC time at sunrise in Vancouver, British COLUMBIA, Canada 49N 123 30 W on the 6th December?", 
+        ans: "c. 1550.",
+        sol: "<em>Note: Air Almanac extraction problem. Longitude 123&deg;30'W requires +8 hours 14 mins applied to the extracted LMT of sunrise at 49&deg;N on Dec 6th.</em>"
+    },
+    { 
+        q: "<strong>Booklet Q37.</strong> The ratio of the ellipticity of the earth is 1/297, if the major axis is 6956 km at the equator, what is the minor axis (poles)?", 
+        ans: "c. 6932 km.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Ellipticity = (Major Axis - Minor Axis) / Major Axis.<br>2. 1/297 = (6956 - Minor) / 6956.<br>3. 6956 / 297 = 23.42 km difference.<br>4. Minor Axis = 6956 - 23.42 = <strong>6932.5 km</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q40.</strong> What is the approximate circumference of the earth?", 
+        ans: "c. 21600 nm.",
+        sol: "<strong>Definition:</strong> 360 degrees &times; 60 minutes/degree = 21,600 minutes of arc. 1 minute of arc along a great circle = 1 Nautical Mile. Total = 21,600 nm."
+    },
+    { 
+        q: "<strong>Booklet Q41.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 60N parallel of latitude and aircraft B is flying along the equator. If aircraft A is flying at a groundspeed of 240 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "c. 480 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Departure Formula: Distance at Latitude = Equator Distance &times; cos(Lat).<br>2. Dist(60N) = Equator &times; cos(60&deg;) = 0.5 &times; Equator.<br>3. Since B has to travel twice the distance in the exact same time, B must fly twice as fast.<br>4. Speed of B = 240 &times; 2 = <strong>480 knots</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q42.</strong> The circumference of the Earth is approximately?", 
+        ans: "d. 40,000 km.",
+        sol: "<strong>Definition:</strong> The Earth's circumference is roughly 21,600 Nautical Miles, which converts to approximately 40,000 Kilometers."
+    },
+    { 
+        q: "<strong>Booklet Q43.</strong> The sun rises at 55&deg; N and 050&deg;E on the 25th January at 0254 UTC. On the same day what time does it rise at 55&deg; N and 040&deg;W?", 
+        ans: "a. 0854 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 050&deg;E to 040&deg;W = 90&deg; difference.<br>2. Convert to Time: 90&deg; / 15 = 6 hours.<br>3. Determine Direction: West is later in UTC.<br>4. Calculate: 0254 + 0600 = <strong>0854 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q45.</strong> The sun rises at 50&deg; N and 025&deg;W on the 25th January at 0654 UTC. On the same day what time does it rise at 50&deg; N and 040&deg;E?", 
+        ans: "c. 0234 UTC.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Longitude Difference: 025&deg;W to 040&deg;E = 65&deg; difference.<br>2. Convert to Time: 65&deg; / 15 = 4 hours 20 mins.<br>3. Determine Direction: East is earlier in UTC.<br>4. Calculate: 0654 - 0420 = <strong>0234 UTC</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q46.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 50N parallel of latitude and aircraft B is flying along the equator. If aircraft A is flying at a groundspeed of 340 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "a. 529 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Speed B (Equator) = Speed A (Latitude) / cos(Latitude).<br>2. Speed B = 340 / cos(50&deg;).<br>3. Speed B = 340 / 0.6427.<br>4. Speed B = <strong>529 knots</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q47.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 45N parallel of latitude and aircraft B is flying along the equator. If aircraft A is flying at a groundspeed of 300 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "b. 424 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Speed B (Equator) = Speed A (Latitude) / cos(Latitude).<br>2. Speed B = 300 / cos(45&deg;).<br>3. Speed B = 300 / 0.7071.<br>4. Speed B = <strong>424.2 knots</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q48.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 60N parallel of latitude and aircraft B is flying along the 20&deg;N parallel. If aircraft A is flying at a groundspeed of 240 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "c. 451 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Ratio = cos(Lat B) / cos(Lat A).<br>2. Speed B = Speed A &times; (cos(20&deg;) / cos(60&deg;)).<br>3. Speed B = 240 &times; (0.9396 / 0.5).<br>4. Speed B = 240 &times; 1.879 = <strong>451 knots</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q49.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 75N parallel of latitude and aircraft B is flying along 45S. If aircraft A is flying at a groundspeed of 300 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "c. 820 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Speed B = Speed A &times; (cos(Lat B) / cos(Lat A)).<br>2. Speed B = 300 &times; (cos(45&deg;) / cos(75&deg;)).<br>3. Speed B = 300 &times; (0.7071 / 0.2588).<br>4. Speed B = 300 &times; 2.732 = <strong>819.6 knots</strong>."
+    },
+    { 
+        q: "<strong>Booklet Q50.</strong> Two aircraft are flying eastwards around the earth. Aircraft A is flying along the 30N parallel of latitude and aircraft B is flying along the equator. If aircraft A is flying at a groundspeed of 400 knots, what would be the groundspeed of aircraft B both aircraft fly once round the Earth in the same journey time?", 
+        ans: "b. 462 knots.",
+        sol: "<strong>Step-by-Step Resolution:</strong><br><br>1. Formula: Speed B (Equator) = Speed A (Latitude) / cos(Latitude).<br>2. Speed B = 400 / cos(30&deg;).<br>3. Speed B = 400 / 0.866.<br>4. Speed B = <strong>461.8 knots</strong>."
+    }
+        ];
+
+        let currentNumIndex = 0;
+
+        function startNumericals() {
+            switchView('numerical-page');
+            currentNumIndex = 0;
+            renderNumerical();
+        }
+
+        function renderNumerical() {
+            if (numericalsData.length === 0) return;
+            const qData = numericalsData[currentNumIndex];
+            
+            document.getElementById('num-counter').innerText = `Calculation Q${currentNumIndex + 1} of ${numericalsData.length}`;
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / numericalsData.length) * 100}%`;
+            document.getElementById('num-q-text').innerHTML = qData.q;
+            
+            const ansBox = document.getElementById('num-ans-box');
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`;
+            ansBox.style.display = 'none';
+            
+            const solBox = document.getElementById('num-sol-box');
+            solBox.innerHTML = qData.sol;
+            solBox.style.display = 'none';
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0;
+            document.getElementById('num-next-btn').disabled = currentNumIndex === numericalsData.length - 1;
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>

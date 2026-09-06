@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CH 5 | Compass and Directions</title>
+    <style>
+        :root {
+            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
+            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
+            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
+        .nav-btn:hover { background-color: var(--accent); }
+        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
+        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
+        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
+        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
+        
+        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
+        
+        /* QUIZ & NUMERICALS STYLING */
+        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
+        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
+        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
+        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
+        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
+        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .option-btn:disabled { cursor: default; }
+        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
+        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
+        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
+        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
+        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
+        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
+        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
+        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
+        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
+        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
+        #finish-screen { text-align: center; padding-top: 40px; }
+        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
+        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- 1. MODULE SELECTION -->
+        <div id="module-page" class="view-section" style="display: flex;">
+            <div class="header-bar">
+                <h2>Chapter 5: Compass and Directions</h2>
+                <a href="index.html" class="nav-btn">Back to Hub</a>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" onclick="initQuiz()">
+                    <h3>Quiz</h3>
+                    <p>6 Theory MCQs</p>
+                </div>
+                <div class="module-card" onclick="startNumericals()">
+                    <h3>Numericals</h3>
+                    <p>14 Calculation Problems</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. QUIZ PAGE -->
+        <div id="quiz-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="quiz-counter">Question 1 of X</h2>
+                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="quiz-q-text">Loading question...</div>
+                <div class="options-grid" id="quiz-options-container"></div>
+                <div id="quiz-feedback-box" class="feedback-box"></div>
+            </div>
+            <div class="quiz-nav-controls">
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+            </div>
+        </div>
+
+        <!-- 3. QUIZ FINISH SCREEN -->
+        <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
+            <div id="finish-screen" style="display: block;">
+                <h1>Quiz Complete!</h1>
+                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. NUMERICALS LINEAR FLOW PAGE -->
+        <div id="numerical-linear-page" class="view-section">
+            <div class="quiz-top-header">
+                <h2 id="num-counter">Numerical 1 of X</h2>
+                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
+            
+            <div class="content-area" style="max-height: none; padding: 20px;">
+                <div class="question-text" id="num-q-text">Loading problem...</div>
+                
+                <div style="margin-top: 25px; display: flex; gap: 15px;">
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
+                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+                </div>
+
+                <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
+                <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
+            </div>
+            
+            <div class="quiz-nav-controls">
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // SPA NAVIGATION LOGIC
+        // ==========================================
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById(viewId).style.display = 'flex';
+        }
+
+        // ==========================================
+        // DATA BANK: MCQs (CHAPTER 5)
+        // ==========================================
+        const quizData = [ 
+            { q: "For flying in a given direction, the pilot needs a:", options: { a: "Compass", b: "Protractor", c: "Manual" }, ans: "b" },
+            { q: "The true direction to be followed between two points can be obtained if you have a:", options: { a: "Compass", b: "Map", c: "Radio compass" }, ans: "a" },
+            { q: "Variation is the angular difference at a place between True North and Magnetic North and expressed in degrees to the East or West of:", options: { a: "True North", b: "Magnetic North", c: "Both" }, ans: "a" },
+            { q: "When Variation is East:", options: { a: "Magnetic direction is less than true direction", b: "Magnetic direction is more than true direction", c: "depends upon the hemisphere" }, ans: "a" },
+            { q: "Lines joining places of equal variation shown on a map/chart are called:", options: { a: "Isogonals", b: "Isobars", c: "Aclinic lines" }, ans: "a" },
+            { q: "A line joining places of zero variation is called:", options: { a: "an aclinic line", b: "an isoclinic line", c: "an agonic line" }, ans: "c" }
+        ];
+
+        let activeQuizData = [], userAnswers = [], currentQIndex = 0;
+        
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        function initQuiz() { 
+            switchView('quiz-page');
+            activeQuizData = JSON.parse(JSON.stringify(quizData)); 
+            shuffleArray(activeQuizData); 
+            activeQuizData.forEach(q => { 
+                let optionsArr = Object.entries(q.options).map(([key, val]) => ({ key, val })); 
+                shuffleArray(optionsArr); 
+                q.shuffledOptions = optionsArr; 
+            }); 
+            userAnswers = new Array(activeQuizData.length).fill(null); 
+            currentQIndex = 0; 
+            renderQuestion(); 
+        }
+
+        function updateScore() { 
+            let currentScore = 0; 
+            userAnswers.forEach((ans, index) => { 
+                if (ans === activeQuizData[index].ans) { currentScore++; } 
+            }); 
+            document.getElementById('quiz-score-display').textContent = currentScore; 
+            return currentScore; 
+        }
+
+        function renderQuestion() { 
+            if(activeQuizData.length === 0) return;
+            const qData = activeQuizData[currentQIndex]; 
+            const selectedAns = userAnswers[currentQIndex]; 
+            
+            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+            document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
+            document.getElementById('quiz-q-text').innerHTML = qData.q; 
+            updateScore(); 
+            
+            const optionsContainer = document.getElementById('quiz-options-container'); 
+            optionsContainer.innerHTML = ''; 
+            qData.shuffledOptions.forEach(opt => { 
+                const btn = document.createElement('button'); 
+                btn.className = 'option-btn'; 
+                btn.innerHTML = opt.val; 
+                
+                if (selectedAns !== null) { 
+                    btn.disabled = true; 
+                    if (opt.key === qData.ans) { btn.classList.add('correct-ans'); } 
+                    else if (opt.key === selectedAns) { btn.classList.add('wrong-ans'); } 
+                } else { 
+                    btn.onclick = () => { userAnswers[currentQIndex] = opt.key; renderQuestion(); }; 
+                } 
+                optionsContainer.appendChild(btn); 
+            }); 
+            
+            const feedbackBox = document.getElementById('quiz-feedback-box'); 
+            feedbackBox.className = 'feedback-box'; 
+            if (selectedAns !== null) { 
+                feedbackBox.style.display = 'block';
+                if (selectedAns === qData.ans) { 
+                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.classList.add('feedback-correct'); 
+                } else { 
+                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.classList.add('feedback-wrong'); 
+                } 
+            } else { feedbackBox.style.display = 'none'; }
+            
+            document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
+            const nextBtn = document.getElementById('quiz-next-btn'); 
+            if (selectedAns === null) { nextBtn.disabled = true; nextBtn.textContent = "Next"; } 
+            else { nextBtn.disabled = false; nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; } 
+        }
+
+        function goPrevQuiz() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
+        function goNextQuiz() { 
+            if (currentQIndex < activeQuizData.length - 1) { currentQIndex++; renderQuestion(); } 
+            else { switchView('quiz-finish-screen'); document.getElementById('final-score').textContent = updateScore(); document.getElementById('total-questions').textContent = activeQuizData.length; } 
+        }
+
+        // ==========================================
+        // DATA BANK: NUMERICALS (CHAPTER 5)
+        // ==========================================
+        const numericalsData = [
+            { 
+                q: "Given:<br>&bull; Compass Heading: 120&deg;<br>&bull; Deviation: 10&deg;W<br>&bull; Variation: 15&deg;E<br><br>Find Magnetic Heading and True Heading.", 
+                ans: "Hdg(M) = 110&deg;<br>Hdg(T) = 125&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><em>(Add East, Subtract West when moving Left to Right)</em><br><br><strong>1. Magnetic Heading:</strong><br>Compass (120&deg;) - West Deviation (10&deg;) = 110&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (110&deg;) + East Variation (15&deg;) = 125&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Compass Heading: 345&deg;<br>&bull; Deviation: -7&deg; (7&deg;W)<br>&bull; Variation: 27&deg;E<br><br>Find Magnetic Heading and True Heading.", 
+                ans: "Hdg(M) = 338&deg;<br>Hdg(T) = 005&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><br><strong>1. Magnetic Heading:</strong><br>Compass (345&deg;) - West Deviation (7&deg;) = 338&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (338&deg;) + East Variation (27&deg;) = 365&deg;<br>365&deg; - 360&deg; = 005&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Magnetic Heading: 132&deg;<br>&bull; Deviation: 4&deg;E<br>&bull; Variation: 24&deg;W<br><br>Find Compass Heading and True Heading.", 
+                ans: "Hdg(C) = 128&deg;<br>Hdg(T) = 108&deg;", 
+                sol: "<strong>1. True Heading (Moving Left to Right):</strong><br>Magnetic (132&deg;) - West Variation (24&deg;) = 108&deg;<br><br><strong>2. Compass Heading (Moving Right to Left):</strong><br><em>(Subtract East, Add West when working backward)</em><br>Magnetic (132&deg;) - East Deviation (4&deg;) = 128&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; True Heading: 220&deg;<br>&bull; Deviation: 12&deg;W<br>&bull; Variation: 12&deg;W<br><br>Find Compass Heading and Magnetic Heading.", 
+                ans: "Hdg(C) = 244&deg;<br>Hdg(M) = 232&deg;", 
+                sol: "Rule: True &plusmn; Variation = Magnetic &plusmn; Deviation = Compass<br><em>(Subtract East, Add West when moving Right to Left)</em><br><br><strong>1. Magnetic Heading:</strong><br>True (220&deg;) + West Variation (12&deg;) = 232&deg;<br><br><strong>2. Compass Heading:</strong><br>Magnetic (232&deg;) + West Deviation (12&deg;) = 244&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; True Heading: 270&deg;<br>&bull; Deviation: +10&deg; (10&deg;E)<br>&bull; Variation: 7&deg;E<br><br>Find Compass Heading and Magnetic Heading.", 
+                ans: "Hdg(C) = 253&deg;<br>Hdg(M) = 263&deg;", 
+                sol: "Rule: True &plusmn; Variation = Magnetic &plusmn; Deviation = Compass<br><em>(Subtract East, Add West when moving Right to Left)</em><br><br><strong>1. Magnetic Heading:</strong><br>True (270&deg;) - East Variation (7&deg;) = 263&deg;<br><br><strong>2. Compass Heading:</strong><br>Magnetic (263&deg;) - East Deviation (10&deg;) = 253&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Magnetic Heading: 300&deg;<br>&bull; Deviation: 16&deg;W<br>&bull; Variation: 16&deg;E<br><br>Find Compass Heading and True Heading.", 
+                ans: "Hdg(C) = 316&deg;<br>Hdg(T) = 316&deg;", 
+                sol: "<strong>1. True Heading (Moving Left to Right):</strong><br>Magnetic (300&deg;) + East Variation (16&deg;) = 316&deg;<br><br><strong>2. Compass Heading (Moving Right to Left):</strong><br>Magnetic (300&deg;) + West Deviation (16&deg;) = 316&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Compass Heading: 030&deg;<br>&bull; Deviation: 10&deg;E<br>&bull; Variation: 4&deg;E<br><br>Find Magnetic Heading and True Heading.", 
+                ans: "Hdg(M) = 040&deg;<br>Hdg(T) = 044&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><br><strong>1. Magnetic Heading:</strong><br>Compass (030&deg;) + East Deviation (10&deg;) = 040&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (040&deg;) + East Variation (4&deg;) = 044&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Compass Heading: 000&deg;<br>&bull; Deviation: 10&deg;W<br>&bull; Variation: 17&deg;W<br><br>Find Magnetic Heading and True Heading.", 
+                ans: "Hdg(M) = 350&deg;<br>Hdg(T) = 333&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><br><strong>1. Magnetic Heading:</strong><br>Compass (360&deg;) - West Deviation (10&deg;) = 350&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (350&deg;) - West Variation (17&deg;) = 333&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Magnetic Heading: 215&deg;<br>&bull; Deviation: 3&deg;E<br>&bull; Variation: 6&deg;W<br><br>Find Compass Heading and True Heading.", 
+                ans: "Hdg(C) = 212&deg;<br>Hdg(T) = 209&deg;", 
+                sol: "<strong>1. True Heading (Moving Left to Right):</strong><br>Magnetic (215&deg;) - West Variation (6&deg;) = 209&deg;<br><br><strong>2. Compass Heading (Moving Right to Left):</strong><br>Magnetic (215&deg;) - East Deviation (3&deg;) = 212&deg;" 
+            },
+            { 
+                q: "Given:<br>&bull; Compass Heading: 220&deg;<br>&bull; Deviation: -4&deg; (4&deg;W)<br>&bull; Variation: 5&deg;W<br><br>Find Magnetic Heading and True Heading.", 
+                ans: "Hdg(M) = 216&deg;<br>Hdg(T) = 211&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><br><strong>1. Magnetic Heading:</strong><br>Compass (220&deg;) - West Deviation (4&deg;) = 216&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (216&deg;) - West Variation (5&deg;) = 211&deg;" 
+            },
+            { 
+                q: "Find the missing values based on the following information:<br><br>&bull; Variation: 3&deg;W<br>&bull; True Heading: 090&deg;<br>&bull; Deviation: 7&deg;E<br><br>Find Compass Heading and Magnetic Heading.", 
+                ans: "Hdg(C) = 086&deg;<br>Hdg(M) = 093&deg;", 
+                sol: "Rule: True &plusmn; Variation = Magnetic &plusmn; Deviation = Compass<br><em>(Subtract East, Add West when moving Right to Left)</em><br><br><strong>1. Magnetic Heading:</strong><br>True (090&deg;) + West Variation (3&deg;) = 093&deg;<br><br><strong>2. Compass Heading:</strong><br>Magnetic (093&deg;) - East Deviation (7&deg;) = 086&deg;" 
+            },
+            { 
+                q: "Find the missing values based on the following information:<br><br>&bull; Variation: 2&deg;E<br>&bull; True Heading: 270&deg;<br>&bull; Compass Heading: 274&deg;<br><br>Find Deviation and Magnetic Heading.", 
+                ans: "Deviation = 6&deg;W<br>Hdg(M) = 268&deg;", 
+                sol: "<strong>1. Magnetic Heading (Right to Left):</strong><br>True (270&deg;) - East Variation (2&deg;) = 268&deg;<br><br><strong>2. Deviation:</strong><br>Deviation = Magnetic - Compass<br>Deviation = 268&deg; - 274&deg; = -6&deg; (6&deg;W)" 
+            },
+            { 
+                q: "Find the missing values based on the following information:<br><br>&bull; Variation: -4&deg; (4&deg;W)<br>&bull; Compass Heading: 224&deg;<br>&bull; Magnetic Heading: 228&deg;<br><br>Find True Heading and Deviation.", 
+                ans: "Hdg(T) = 224&deg;<br>Deviation = 4&deg;E", 
+                sol: "<strong>1. Deviation:</strong><br>Deviation = Magnetic - Compass<br>Deviation = 228&deg; - 224&deg; = +4&deg; (4&deg;E)<br><br><strong>2. True Heading:</strong><br>Magnetic (228&deg;) - West Variation (4&deg;) = 224&deg;" 
+            },
+            { 
+                q: "Find the missing values based on the following information:<br><br>&bull; Variation: +6&deg; (6&deg;E)<br>&bull; Compass Heading: 300&deg;<br>&bull; Deviation: +4&deg; (4&deg;E)<br><br>Find True Heading and Magnetic Heading.", 
+                ans: "Hdg(M) = 304&deg;<br>Hdg(T) = 310&deg;", 
+                sol: "Rule: Compass &plusmn; Deviation = Magnetic &plusmn; Variation = True<br><br><strong>1. Magnetic Heading:</strong><br>Compass (300&deg;) + East Deviation (4&deg;) = 304&deg;<br><br><strong>2. True Heading:</strong><br>Magnetic (304&deg;) + East Variation (6&deg;) = 310&deg;" 
+            }
+        ];
+
+        let activeQuizDataNum = [], currentNumIndex = 0;
+        
+        function startNumericals() { 
+            switchView('numerical-linear-page'); 
+            activeQuizDataNum = numericalsData; 
+            currentNumIndex = 0; 
+            renderNumerical(); 
+        }
+
+        function renderNumerical() { 
+            if (activeQuizDataNum.length === 0) return; 
+            const qData = activeQuizDataNum[currentNumIndex]; 
+            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
+            document.getElementById('num-q-text').innerHTML = qData.q; 
+            
+            const ansBox = document.getElementById('num-ans-box'); 
+            ansBox.innerHTML = `<strong>Answer:</strong><br>${qData.ans}`; 
+            ansBox.style.display = 'none'; 
+            
+            const solBox = document.getElementById('num-sol-box'); 
+            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.style.display = 'none'; 
+            
+            document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
+            document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
+        function goNextNum() { if (currentNumIndex < activeQuizDataNum.length - 1) { currentNumIndex++; renderNumerical(); } }
+    </script>
+</body>
+</html>
