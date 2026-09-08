@@ -3,157 +3,337 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Nav Command Center</title>
+    <title>Air Navigation | DGCA CPL Ground School Command Center</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/pilot-theme.css">
     <style>
-        /* --- CORE STYLING --- */
-        :root {
-            --bg-color: #050505;
-            --panel-bg: #121212;
-            --text-main: #f0f0f0;
-            --text-muted: #888888;
-            --accent: #2a2a2a;
-            --accent-hover: #404040;
-            --border: #333333;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        /* Specific Styles for Hub */
+        .search-container {
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 95%;
-            max-width: 1200px;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
-            padding: 40px; 
-            min-height: 85vh;
-            display: flex;
-            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
             position: relative;
         }
 
-        .view-section {
-            display: none;
-            flex-direction: column;
-            flex-grow: 1;
-            animation: fadeIn 0.4s ease-in-out;
-        }
-
-        /* --- Landing Page --- */
-        #landing-page { justify-content: center; align-items: center; text-align: center; }
-        .title { font-size: 3.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-        .subtitle { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 40px; font-family: 'Courier New', monospace; }
-        
-        .btn {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            border: 1px solid var(--border);
-            padding: 15px 50px;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
-
-        /* --- Header & Navigation --- */
-        .header-bar {
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--cyan-primary);
+            pointer-events: none;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 15px; 
-            margin-bottom: 20px; 
         }
-        .nav-btn {
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-main);
+
+        .search-container input {
+            padding-left: 42px;
+            width: 100%;
+        }
+
+        .quick-formula-btn {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: var(--gold-accent);
             padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
             cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        .nav-btn:hover { background-color: var(--accent); }
-
-        /* --- Chapter Grid --- */
-        .chapter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-        
-        .chapter-card {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border);
-            padding: 20px 10px;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 4px;
             transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 90px;
-            text-decoration: none; /* Removes underline from links */
-            color: var(--text-main);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
         }
-        
-        .chapter-card:hover { 
-            background-color: var(--accent); 
-            transform: scale(1.02); 
-            border-color: var(--text-muted);
-        }
-        
-        .chapter-num { font-size: 1.1rem; font-weight: bold; }
-        .chapter-name { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+        .quick-formula-btn:hover {
+            background: rgba(245, 158, 11, 0.22);
+            border-color: var(--gold-accent);
+            box-shadow: 0 0 16px var(--gold-glow);
+        }
+
+        /* Formula Modal */
+        .formula-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 7, 15, 0.85);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .formula-modal-overlay.active {
+            display: flex;
+        }
+
+        .formula-modal-card {
+            background: #0b1222;
+            border: 1px solid var(--border-medium);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px var(--cyan-glow);
+        }
+
+        .formula-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .formula-table th, .formula-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .formula-table th {
+            color: var(--cyan-primary);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            background: rgba(0, 210, 255, 0.05);
+        }
+
+        .formula-table td code {
+            font-family: var(--font-mono);
+            color: #fef08a;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* CRT Shutdown Effect */
+        .crt-off {
+            animation: crtShutdown 0.55s ease-out forwards;
+        }
+
+        @keyframes crtShutdown {
+            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
+            50% { transform: scale(1, 0.005); filter: brightness(3); opacity: 0.9; }
+            100% { transform: scale(0, 0); filter: brightness(0); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <!-- TOP TELEMETRY FLIGHT HUD BAR -->
+    <div class="flight-hud-bar">
+        <div class="hud-left">
+            <span class="hud-pill status-green">
+                <span class="hud-dot"></span>
+                TERMINAL ONLINE
+            </span>
+            <span>CALLSIGN: <strong>CPL-GROUND</strong></span>
+            <span>DGCA AIR-NAV MATRIX</span>
+        </div>
+        <div class="hud-center">
+            <span class="zulu-clock">ZULU: 00:00:00Z</span>
+        </div>
+        <div class="hud-right">
+            <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
+                <span>🔊 AUDIO ON</span>
+            </button>
+            <span class="hud-pill status-gold">IFR CERTIFIED</span>
+        </div>
+    </div>
+
+    <!-- MAIN FLIGHT DECK CONTAINER -->
+    <div class="container" id="terminal-container">
         
-        <!-- LANDING PAGE -->
+        <!-- 1. LANDING PAGE -->
         <div id="landing-page" class="view-section" style="display: flex;">
+            
+            <!-- Pilot Wings SVG Crest -->
+            <svg class="wings-insignia" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="goldWings" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#38bdf8" />
+                        <stop offset="50%" stop-color="#00d2ff" />
+                        <stop offset="100%" stop-color="#2563eb" />
+                    </linearGradient>
+                    <linearGradient id="crestGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#d97706" />
+                    </linearGradient>
+                </defs>
+                <!-- Left Wing -->
+                <path d="M90 40 C60 20, 20 25, 5 35 C30 45, 65 48, 90 44 Z" fill="url(#goldWings)" opacity="0.9" />
+                <path d="M88 44 C62 30, 25 35, 12 42 C35 50, 68 52, 88 48 Z" fill="url(#goldWings)" opacity="0.7" />
+                <path d="M85 48 C65 38, 35 44, 25 49 C45 54, 70 56, 85 52 Z" fill="url(#goldWings)" opacity="0.5" />
+                <!-- Right Wing -->
+                <path d="M110 40 C140 20, 180 25, 195 35 C170 45, 135 48, 110 44 Z" fill="url(#goldWings)" opacity="0.9" />
+                <path d="M112 44 C138 30, 175 35, 188 42 C165 50, 132 52, 112 48 Z" fill="url(#goldWings)" opacity="0.7" />
+                <path d="M115 48 C135 38, 165 44, 175 49 C155 54, 130 56, 115 52 Z" fill="url(#goldWings)" opacity="0.5" />
+                <!-- Central Star & Shield -->
+                <circle cx="100" cy="42" r="16" fill="#0c1424" stroke="url(#crestGlow)" stroke-width="2.5" />
+                <polygon points="100,32 103,39 110,40 105,45 107,52 100,48 93,52 95,45 90,40 97,39" fill="url(#crestGlow)" />
+            </svg>
+
             <h1 class="title">Air Navigation</h1>
-            <p class="subtitle">DGCA CPL Ground School Terminal</p>
-            <button class="btn" onclick="initSystem()">Initialize System</button>
+            <p class="subtitle">DGCA Commercial Pilot Licence (CPL) Ground School Terminal</p>
+
+            <div class="landing-stats-row">
+                <div class="landing-stat-box">
+                    <div class="landing-stat-val">11 / 30</div>
+                    <div class="landing-stat-label">Active Modules</div>
+                </div>
+                <div class="landing-stat-box">
+                    <div class="landing-stat-val">820+</div>
+                    <div class="landing-stat-label">Exam Questions</div>
+                </div>
+                <div class="landing-stat-box">
+                    <div class="landing-stat-val">70%</div>
+                    <div class="landing-stat-label">Pass Clearance</div>
+                </div>
+                <div class="landing-stat-box">
+                    <div class="landing-stat-val">DGCA</div>
+                    <div class="landing-stat-label">Full Syllabus</div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="initSystem()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                </svg>
+                Initialize Flight Deck
+            </button>
         </div>
 
-        <!-- CHAPTERS LIST -->
+        <!-- 2. CHAPTERS LIST / SYLLABUS HUB -->
         <div id="chapters-page" class="view-section">
             <div class="header-bar">
-                <h2>Syllabus Index</h2>
-                <button class="nav-btn" onclick="powerOff()">Power Off</button>
+                <div class="header-title-group">
+                    <div class="header-badge">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 10h2v4h-2zm0 5h2v2h-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Syllabus Flight Matrix</h2>
+                        <div class="header-subtitle">DGCA CPL / ATPL AIR NAVIGATION CURRICULUM</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="quick-formula-btn" onclick="openFormulaModal()">
+                        📐 Quick Formulas
+                    </button>
+                    <button class="nav-btn" onclick="powerOff()">
+                        ⏻ Power Off
+                    </button>
+                </div>
             </div>
+
+            <!-- Filter & Search Controls -->
+            <div class="chapter-filter-bar">
+                <div class="search-container">
+                    <span class="search-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input type="text" id="chapter-search" class="chapter-search-box" placeholder="Search chapters (e.g. Earth, PNR, Speed)..." oninput="filterChapters()">
+                </div>
+
+                <div class="chapter-filter-pills">
+                    <button class="filter-pill active" onclick="setFilter('all', this)">All (30)</button>
+                    <button class="filter-pill" onclick="setFilter('active', this)">Active Modules (1-11)</button>
+                    <button class="filter-pill" onclick="setFilter('phase2', this)">Phase II In-Prep (12-30)</button>
+                </div>
+            </div>
+
+            <!-- Chapter Cards Grid -->
             <div class="chapter-grid" id="chapter-grid-container">
-                <!-- JavaScript generates the 30 links here -->
+                <!-- JavaScript generates the 30 links with professional avionics styling -->
             </div>
         </div>
 
     </div>
 
+    <!-- QUICK FORMULA MODAL -->
+    <div id="formula-modal" class="formula-modal-overlay">
+        <div class="formula-modal-card">
+            <div class="jump-modal-header">
+                <h3 style="font-family: var(--font-mono); color: var(--gold-accent); display: flex; align-items: center; gap: 8px;">
+                    <span>FLIGHT NAVIGATION FORMULA REFERENCE</span>
+                </h3>
+                <button class="nav-btn" style="padding: 4px 12px;" onclick="closeFormulaModal()">✕ CLOSE</button>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">
+                DGCA CPL Essential formulas for fast cockpit calculation drills:
+            </p>
+            <table class="formula-table">
+                <thead>
+                    <tr>
+                        <th>CONCEPT</th>
+                        <th>STANDARD FORMULA</th>
+                        <th>COCKPIT RULE OF THUMB</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Departure (Distance E/W)</strong></td>
+                        <td><code>Dep = d'long (min) &times; cos(Mean Lat)</code></td>
+                        <td>1&deg; d'long at 60&deg; Lat = 30 NM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Convergency</strong></td>
+                        <td><code>Convergency = d'long &times; sin(Mean Lat)</code></td>
+                        <td>At Equator: 0 | At Poles: d'long</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Conversion Angle</strong></td>
+                        <td><code>CA = &frac12; &times; Convergency</code></td>
+                        <td>Difference between GC & Rhumb Line</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1 in 60 Rule</strong></td>
+                        <td><code>Track Error (&deg;) = (Off Track Distance / Dist Flown) &times; 60</code></td>
+                        <td>1 NM off at 60 NM = 1&deg; drift</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rate of Descent (3&deg; GP)</strong></td>
+                        <td><code>ROD (ft/min) &approx; Groundspeed &times; 5</code></td>
+                        <td>120 kt &times; 5 = 600 ft/min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Top of Descent (TOD)</strong></td>
+                        <td><code>Distance (NM) = Altitude to lose (ft) / 300</code></td>
+                        <td>30,000 ft / 300 = 100 NM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Radius of Turn</strong></td>
+                        <td><code>R (NM) = TAS&sup2; / (68,000 &times; tan &theta;)</code></td>
+                        <td>Rate 1 turn = 3&deg;/sec</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PNR (Point of Safe Return)</strong></td>
+                        <td><code>Time to PNR = (E &times; H) / (O + H)</code></td>
+                        <td>E=Safe Endur, O=GS Out, H=GS Home</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Critical Point (CP)</strong></td>
+                        <td><code>Dist to CP = (D &times; H) / (O + H)</code></td>
+                        <td>D=Total dist, O=GS Out, H=GS Home</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/pilot-cockpit.js"></script>
     <script>
-        // Dictionary for chapter names. We can easily add to this as we build them.
+        // Dictionary for chapter names - EXACT DATA PRESERVED
         const chapterTitles = { 
             1: "The Earth",
             2: "Distances on Earth's Surface",
@@ -168,31 +348,131 @@
             11: "PNR/CP"
         };
 
-        // Automatically generate 30 Chapter Links
-        const chapterContainer = document.getElementById('chapter-grid-container');
-        for (let i = 1; i <= 30; i++) {
-            let a = document.createElement('a');
-            a.className = 'chapter-card';
-            
-            // Sets the destination to ch1.html, ch2.html, etc.
-            a.href = `ch${i}.html`; 
-            
-            let titleText = chapterTitles[i] ? `<div class="chapter-name">${chapterTitles[i]}</div>` : ``;
-            a.innerHTML = `<div class="chapter-num">CH ${i}</div> ${titleText}`;
-            
-            chapterContainer.appendChild(a);
+        // Chapter Subtitle / Breakdown Metadata for Active Modules
+        const chapterMeta = {
+            1: { type: "Theory & Calculations", stats: "19 MCQs • 10 Numericals", tag: "Earth Geometry" },
+            2: { type: "Earth Surface", stats: "16 MCQs • 40 Numericals", tag: "Distances & NM" },
+            3: { type: "Convergency", stats: "14 MCQs • 30 Numericals", tag: "Meridians & Great Circles" },
+            4: { type: "Mass & Balance", stats: "14 MCQs • 40 Numericals", tag: "Payload & Fuel" },
+            5: { type: "Directional Gyro", stats: "10 MCQs • 10 Numericals", tag: "Magnetism & Drift" },
+            6: { type: "DR Navigation", stats: "10 MCQs • 20 Numericals", tag: "Triangle of Velocities" },
+            7: { type: "Descents & Climes", stats: "100 Rapid • 60 Problems", tag: "160 Flight Problems" },
+            8: { type: "Aeronautical Charts", stats: "50 MCQs • 111 Numericals", tag: "Mercator & Lamberts" },
+            9: { type: "Inertial Systems", stats: "19 MCQs • 50 Numericals", tag: "Schuler Tuning & Gyros" },
+            10: { type: "Celestial & Time", stats: "25 MCQs • 45 Numericals", tag: "LMT, UTC & Twilight" },
+            11: { type: "Flight Planning", stats: "135 Advanced Problems", tag: "Critical Point & PNR" }
+        };
+
+        let currentFilter = 'all';
+
+        // Render 30 Chapter Links
+        function renderChapterGrid() {
+            const chapterContainer = document.getElementById('chapter-grid-container');
+            chapterContainer.innerHTML = '';
+
+            const searchTerm = document.getElementById('chapter-search').value.toLowerCase().trim();
+
+            for (let i = 1; i <= 30; i++) {
+                const isOnline = i <= 11;
+                const titleText = chapterTitles[i] || `Navigation Subject Part ${i}`;
+                const meta = chapterMeta[i] || { type: "DGCA Phase II", stats: "Curriculum In Prep", tag: "Clearance Pending" };
+
+                // Filtering logic
+                if (currentFilter === 'active' && !isOnline) continue;
+                if (currentFilter === 'phase2' && isOnline) continue;
+
+                if (searchTerm) {
+                    const matchNum = `ch ${i}`.includes(searchTerm) || `${i}` === searchTerm;
+                    const matchTitle = titleText.toLowerCase().includes(searchTerm);
+                    const matchTag = meta.tag.toLowerCase().includes(searchTerm);
+                    if (!matchNum && !matchTitle && !matchTag) continue;
+                }
+
+                let a = document.createElement('a');
+                a.className = isOnline ? 'chapter-card' : 'chapter-card is-locked';
+
+                if (isOnline) {
+                    a.href = `ch${i}.html`;
+                } else {
+                    a.href = 'javascript:void(0)';
+                    a.onclick = () => {
+                        playCockpitBeep('wrong');
+                        alert(`✈️ FLIGHT ADVISORY: Chapter ${i} (${titleText}) is part of Phase II DGCA syllabus synchronization. Please drill Active Modules 1 through 11.`);
+                    };
+                }
+
+                a.innerHTML = `
+                    <div>
+                        <div class="chapter-card-top">
+                            <span class="chapter-num">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                </svg>
+                                MODULE ${i < 10 ? '0' + i : i}
+                            </span>
+                            <span class="chapter-status-pill ${isOnline ? '' : 'locked'}">
+                                ${isOnline ? 'FLIGHT READY' : 'IN PREP'}
+                            </span>
+                        </div>
+                        <div class="chapter-name">${titleText}</div>
+                        <div style="font-size: 0.8rem; color: var(--cyan-primary); font-family: var(--font-mono);">${meta.tag}</div>
+                    </div>
+                    <div class="chapter-meta">
+                        <span>${meta.stats}</span>
+                        <span style="color: ${isOnline ? 'var(--cyan-primary)' : 'var(--text-dim)'}; font-weight: 700;">
+                            ${isOnline ? 'ENGAGE →' : 'LOCKED'}
+                        </span>
+                    </div>
+                `;
+
+                chapterContainer.appendChild(a);
+            }
         }
 
-        // Simple visibility toggles for the landing page
+        function filterChapters() {
+            renderChapterGrid();
+        }
+
+        function setFilter(filterType, btn) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderChapterGrid();
+            playCockpitBeep('click');
+        }
+
+        // Visibility toggles with audio
         function initSystem() {
+            playCockpitBeep('correct');
             document.getElementById('landing-page').style.display = 'none';
             document.getElementById('chapters-page').style.display = 'flex';
+            renderChapterGrid();
         }
 
         function powerOff() {
-            document.getElementById('chapters-page').style.display = 'none';
-            document.getElementById('landing-page').style.display = 'flex';
+            playCockpitBeep('click');
+            const container = document.getElementById('terminal-container');
+            container.classList.add('crt-off');
+            setTimeout(() => {
+                document.getElementById('chapters-page').style.display = 'none';
+                document.getElementById('landing-page').style.display = 'flex';
+                container.classList.remove('crt-off');
+            }, 550);
         }
+
+        // Formula modal
+        function openFormulaModal() {
+            document.getElementById('formula-modal').classList.add('active');
+            playCockpitBeep('click');
+        }
+
+        function closeFormulaModal() {
+            document.getElementById('formula-modal').classList.remove('active');
+            playCockpitBeep('click');
+        }
+
+        // Initial setup
+        renderChapterGrid();
     </script>
 </body>
 </html>

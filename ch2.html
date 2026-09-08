@@ -3,77 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CH 2 | Air Navigation</title>
-    <style>
-        :root {
-            --bg-color: #050505; --panel-bg: #121212; --text-main: #f0f0f0; --text-muted: #888888;
-            --accent: #2a2a2a; --accent-hover: #404040; --border: #333333; --highlight: #555555;
-            --correct-bg: #1e4620; --correct-border: #4caf50; --wrong-bg: #4a1919; --wrong-border: #f44336;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg-color); color: var(--text-main); font-family: 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 95%; max-width: 1200px; background-color: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); padding: 30px; min-height: 85vh; display: flex; flex-direction: column; position: relative; }
-        .view-section { display: none; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
-        
-        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        .nav-btn { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; cursor: pointer; border-radius: 4px; transition: background 0.2s; text-decoration: none; }
-        .nav-btn:hover { background-color: var(--accent); }
-        .btn { background-color: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 15px 50px; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
-        .btn:hover { background-color: var(--accent); border-color: var(--text-main); }
-        
-        .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
-        .module-card { background-color: var(--bg-color); border: 1px solid var(--border); padding: 50px 20px; text-align: center; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
-        .module-card:hover { background-color: var(--accent); border-color: var(--text-muted); transform: translateY(-5px); }
-        .module-card h3 { font-size: 1.8rem; margin-bottom: 10px; }
-        .module-card p { color: var(--text-muted); font-family: 'Courier New', monospace; }
-        
-        .content-area { background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 4px; padding: 25px; flex-grow: 1; font-size: 1.1rem; line-height: 1.7; color: #d0d0d0; overflow-y: auto; max-height: 68vh; }
-        
-        /* QUIZ & NUMERICALS STYLING */
-        .quiz-top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .quiz-top-header h2 { margin: 0; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
-        .score-badge { background: var(--accent); border: 1px solid #444; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: var(--text-main); }
-        .progress-bar-container { width: 100%; background-color: var(--accent); border-radius: 8px; height: 6px; margin-bottom: 15px; overflow: hidden; }
-        .progress-bar { height: 100%; background-color: var(--text-muted); width: 0%; transition: width 0.3s ease; }
-        .question-text { font-size: 1.25rem; margin-bottom: 15px; line-height: 1.4; font-weight: 500; color: var(--text-main); } 
-        .options-grid { display: flex; flex-direction: column; gap: 8px; } 
-        .option-btn { background-color: var(--accent); color: var(--text-main); border: 2px solid transparent; border-radius: 8px; padding: 12px 20px; font-size: 1rem; cursor: pointer; text-align: left; transition: all 0.2s ease; }
-        .option-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
-        .option-btn:disabled { cursor: default; }
-        .correct-ans { background-color: var(--correct-bg) !important; border-color: var(--correct-border) !important; color: white; }
-        .wrong-ans { background-color: var(--wrong-bg) !important; border-color: var(--wrong-border) !important; color: white; }
-        .feedback-box { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: left; font-weight: 600; display: none; font-size: 1rem; }
-        .feedback-correct { display: block; background-color: rgba(76, 175, 80, 0.15); color: var(--correct-border); border: 1px solid var(--correct-bg); padding: 15px; font-size: 1.15rem; }
-        .feedback-wrong { display: block; background-color: rgba(244, 67, 54, 0.15); color: var(--wrong-border); border: 1px solid var(--wrong-bg); padding: 15px; font-size: 1.15rem; }
-        .sol-box { display: block; background-color: var(--panel-bg); color: var(--text-main); border: 1px solid var(--border); font-family: 'Courier New', monospace; padding: 20px; margin-top: 15px; font-weight: normal; line-height: 1.6; }
-        .quiz-nav-controls { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--accent); }
-        .quiz-nav-btn { background-color: var(--highlight); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; min-width: 110px; }
-        .quiz-nav-btn:hover:not(:disabled) { background-color: #666666; }
-        .quiz-nav-btn:disabled { background-color: var(--bg-color); color: #555; cursor: not-allowed; border: 1px solid #333; }
-        #finish-screen { text-align: center; padding-top: 40px; }
-        #finish-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-main);}
-        #finish-screen p { font-size: 1.2rem; color: var(--text-muted); margin-bottom: 30px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <title>CH 2 | Air Navigation Flight Deck</title>
+    <link rel="stylesheet" href="css/pilot-theme.css">
 </head>
 <body>
 
+    <!-- TOP TELEMETRY FLIGHT HUD BAR -->
+    <div class="flight-hud-bar">
+        <div class="hud-left">
+            <span class="hud-pill status-green">
+                <span class="hud-dot"></span>
+                FLIGHT DECK ONLINE
+            </span>
+            <span>MODULE: <strong>CH 02 // DISTANCES & NM</strong></span>
+        </div>
+        <div class="hud-center">
+            <span class="zulu-clock">ZULU: 00:00:00Z</span>
+        </div>
+        <div class="hud-right">
+            <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
+                <span>🔊 AUDIO ON</span>
+            </button>
+            <span class="hud-pill status-gold">DGCA CPL</span>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
     <div class="container">
-        
+
         <!-- 1. MODULE SELECTION -->
         <div id="module-page" class="view-section" style="display: flex;">
             <div class="header-bar">
-                <h2>Chapter 2: Distances on Earth's Surface</h2>
-                <a href="index.html" class="nav-btn">Back to Hub</a>
+                <div class="header-title-group">
+                    <div class="header-badge">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    </div>
+                    <div>
+                        <h2>Chapter 2: Distances on Earth's Surface</h2>
+                        <div class="header-subtitle">NAUTICAL MILES • DEPARTURE • RHUMB LINE & GREAT CIRCLE DISTANCES</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <a href="index.html" class="nav-btn">← Flight Hub</a>
+                </div>
             </div>
+
             <div class="module-grid">
                 <div class="module-card" onclick="initQuiz()">
-                    <h3>Quiz</h3>
+                    <div class="module-card-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    </div>
+                    <h3>Theory Quiz</h3>
                     <p>16 Theory MCQs</p>
+                    <div class="module-card-meta">
+                        <span>DGCA Standard Questions</span>
+                        <span>Auto-Scoring</span>
+                    </div>
+                    <span class="module-card-badge">Launch Quiz →</span>
                 </div>
+
                 <div class="module-card" onclick="startNumericals()">
-                    <h3>Numericals</h3>
+                    <div class="module-card-icon" style="color: var(--gold-accent); background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25);">
+                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+                    </div>
+                    <h3>Numericals Engine</h3>
                     <p>40 Calculation Problems</p>
+                    <div class="module-card-meta">
+                        <span>Step-by-Step Derivations</span>
+                        <span>Formula Walkthroughs</span>
+                    </div>
+                    <span class="module-card-badge" style="border-color: rgba(245, 158, 11, 0.3);">Launch Problems →</span>
                 </div>
             </div>
         </div>
@@ -81,30 +80,52 @@
         <!-- 2. QUIZ PAGE -->
         <div id="quiz-page" class="view-section">
             <div class="quiz-top-header">
-                <h2 id="quiz-counter">Question 1 of X</h2>
-                <div class="score-badge">Score: <span id="quiz-score-display">0</span></div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h2 id="quiz-counter">Question 1 of X</h2>
+                    <button class="q-jump-btn" onclick="openJumpModal(activeQuizData.length, currentQIndex, userAnswers, (idx) => { currentQIndex = idx; renderQuestion(); })">
+                        ⚄ Question Radar
+                    </button>
+                </div>
+                <div class="score-badge">
+                    <span>SCORE:</span>
+                    <span id="quiz-score-display">0</span>
+                    <span style="opacity: 0.6; font-size: 0.8rem;" id="quiz-accuracy">/ 0%</span>
+                </div>
             </div>
             <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
-            <div class="content-area" style="max-height: none; padding: 20px;">
+            <div class="content-area">
                 <div class="question-text" id="quiz-q-text">Loading question...</div>
                 <div class="options-grid" id="quiz-options-container"></div>
                 <div id="quiz-feedback-box" class="feedback-box"></div>
             </div>
             <div class="quiz-nav-controls">
-                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">Previous</button>
-                <button class="nav-btn" onclick="switchView('module-page')" style="border-color: var(--border);">Exit Quiz</button>
-                <button id="quiz-next-btn" class="quiz-nav-btn" onclick="goNextQuiz()">Next</button>
+                <button id="quiz-prev-btn" class="quiz-nav-btn" onclick="goPrevQuiz()">← Previous</button>
+                <button class="nav-btn" onclick="switchView('module-page')">✕ Exit Quiz</button>
+                <button id="quiz-next-btn" class="quiz-nav-btn btn-primary" onclick="goNextQuiz()">Next →</button>
             </div>
         </div>
 
         <!-- 3. QUIZ FINISH SCREEN -->
         <div id="quiz-finish-screen" class="view-section" style="justify-content: center;">
-            <div id="finish-screen" style="display: block;">
-                <h1>Quiz Complete!</h1>
-                <p>You scored <span id="final-score"></span> out of <span id="total-questions"></span>.</p>
-                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-                    <button class="btn" onclick="switchView('module-page')">Back to Modules</button>
-                    <button class="btn" style="background-color: var(--highlight);" onclick="initQuiz()">Restart Quiz</button>
+            <div class="finish-screen-box">
+                <div class="debrief-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+                </div>
+                <h1>Mission Debrief: Quiz Complete</h1>
+                <p style="color: var(--text-muted); font-size: 1.05rem;">Commercial Pilot Ground School Assessment</p>
+
+                <div class="score-summary-card">
+                    <div class="score-stat-big" id="final-percentage">0%</div>
+                    <div style="font-size: 1.15rem; color: var(--text-main); font-weight: 600;">
+                        Final Result: <span id="final-score" style="color: var(--cyan-primary);">0</span> / <span id="total-questions">0</span> Correct
+                    </div>
+                    <div class="score-evaluation" id="score-eval-text"></div>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="initQuiz()">↺ Restart Quiz</button>
+                    <button class="nav-btn" onclick="switchView('module-page')">Back to Modules</button>
+                    <a href="index.html" class="nav-btn">Flight Hub</a>
                 </div>
             </div>
         </div>
@@ -112,42 +133,55 @@
         <!-- 4. NUMERICALS LINEAR FLOW PAGE -->
         <div id="numerical-linear-page" class="view-section">
             <div class="quiz-top-header">
-                <h2 id="num-counter">Numerical 1 of X</h2>
-                <button class="nav-btn" onclick="switchView('module-page')">Exit Numericals</button>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h2 id="num-counter">Numerical 1 of X</h2>
+                    <button class="q-jump-btn" onclick="openJumpModal(activeQuizDataNum.length, currentNumIndex, null, (idx) => { currentNumIndex = idx; renderNumerical(); })">
+                        ⚄ Problem Radar
+                    </button>
+                </div>
+                <button class="nav-btn" onclick="switchView('module-page')">✕ Exit Numericals</button>
             </div>
             <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
-            
-            <div class="content-area" style="max-height: none; padding: 20px;">
+
+            <div class="content-area">
                 <div class="question-text" id="num-q-text">Loading problem...</div>
-                
-                <div style="margin-top: 25px; display: flex; gap: 15px;">
-                    <button class="btn" style="padding: 10px 20px; font-size: 1rem;" onclick="document.getElementById('num-ans-box').style.display='block'">Reveal Answer</button>
-                    <button class="btn" style="padding: 10px 20px; font-size: 1rem; background-color: var(--highlight);" onclick="document.getElementById('num-sol-box').style.display='block'">Reveal Solution</button>
+
+                <div style="margin-top: 25px; display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" style="padding: 11px 22px; font-size: 0.92rem;" onclick="revealNumAns()">
+                        👁 Reveal Answer
+                    </button>
+                    <button class="btn btn-gold" style="padding: 11px 22px; font-size: 0.92rem;" onclick="revealNumSol()">
+                        📜 Reveal Step-by-Step Solution
+                    </button>
                 </div>
 
                 <div id="num-ans-box" class="feedback-box feedback-correct" style="display:none;"></div>
                 <div id="num-sol-box" class="feedback-box sol-box" style="display:none;"></div>
             </div>
-            
+
             <div class="quiz-nav-controls">
-                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">Previous</button>
-                <button id="num-next-btn" class="quiz-nav-btn" onclick="goNextNum()">Next</button>
+                <button id="num-prev-btn" class="quiz-nav-btn" onclick="goPrevNum()">← Previous</button>
+                <button id="num-next-btn" class="quiz-nav-btn btn-primary" onclick="goNextNum()">Next →</button>
             </div>
         </div>
 
     </div>
 
+    <!-- Scripts -->
+    <script src="js/pilot-cockpit.js"></script>
     <script>
         // ==========================================
         // SPA NAVIGATION LOGIC
         // ==========================================
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-            document.getElementById(viewId).style.display = 'flex';
+            const target = document.getElementById(viewId);
+            if (target) target.style.display = 'flex';
+            playCockpitBeep('click');
         }
 
         // ==========================================
-        // DATA BANK: MCQs (CHAPTER 2) - 16 QUESTIONS
+        // DATA BANK: MCQs (CHAPTER 2) - UNMODIFIED
         // ==========================================
         const quizData = [ 
             { q: "Length of NM is more at:", options: { a: "Equator", b: "45&deg; Latitude", c: "Poles" }, ans: "c" },
@@ -169,7 +203,7 @@
         ];
 
         let activeQuizData = [], userAnswers = [], currentQIndex = 0;
-        
+
         function shuffleArray(array) { 
             for (let i = array.length - 1; i > 0; i--) { 
                 const j = Math.floor(Math.random() * (i + 1)); 
@@ -193,10 +227,17 @@
 
         function updateScore() { 
             let currentScore = 0; 
+            let answeredCount = 0;
             userAnswers.forEach((ans, index) => { 
+                if (ans !== null) answeredCount++;
                 if (ans === activeQuizData[index].ans) { currentScore++; } 
             }); 
             document.getElementById('quiz-score-display').textContent = currentScore; 
+            const accEl = document.getElementById('quiz-accuracy');
+            if (accEl) {
+                const pct = answeredCount > 0 ? Math.round((currentScore / answeredCount) * 100) : 0;
+                accEl.textContent = `/ ${pct}%`;
+            }
             return currentScore; 
         }
 
@@ -204,19 +245,22 @@
             if(activeQuizData.length === 0) return;
             const qData = activeQuizData[currentQIndex]; 
             const selectedAns = userAnswers[currentQIndex]; 
-            
-            document.getElementById('quiz-counter').textContent = `Question ${currentQIndex + 1} of ${activeQuizData.length}`; 
+
+            document.getElementById('quiz-counter').textContent = `Theory Q${currentQIndex + 1} of ${activeQuizData.length}`; 
             document.getElementById('quiz-progress').style.width = `${((currentQIndex + 1) / activeQuizData.length) * 100}%`; 
             document.getElementById('quiz-q-text').innerHTML = qData.q; 
             updateScore(); 
-            
+
             const optionsContainer = document.getElementById('quiz-options-container'); 
             optionsContainer.innerHTML = ''; 
-            qData.shuffledOptions.forEach(opt => { 
+            qData.shuffledOptions.forEach((opt, optIdx) => { 
                 const btn = document.createElement('button'); 
                 btn.className = 'option-btn'; 
                 btn.id = `btn-${opt.key}`; 
-                btn.innerHTML = opt.val; 
+
+                const letter = String.fromCharCode(65 + optIdx);
+                btn.innerHTML = `<span style="background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.3); color: var(--cyan-primary); width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; font-weight: 700; font-family: var(--font-mono); font-size: 0.85rem; flex-shrink: 0;">${letter}</span> <span>${opt.val}</span>`; 
+
                 if (selectedAns !== null) { 
                     btn.disabled = true; 
                     if (opt.key === qData.ans) { 
@@ -227,34 +271,36 @@
                 } else { 
                     btn.onclick = () => { 
                         userAnswers[currentQIndex] = opt.key; 
+                        const isCorrect = opt.key === qData.ans;
+                        playCockpitBeep(isCorrect ? 'correct' : 'wrong');
                         renderQuestion(); 
                     }; 
                 } 
                 optionsContainer.appendChild(btn); 
             }); 
-            
+
             const feedbackBox = document.getElementById('quiz-feedback-box'); 
             feedbackBox.className = 'feedback-box'; 
             if (selectedAns !== null) { 
                 if (selectedAns === qData.ans) { 
-                    feedbackBox.innerHTML = "<strong>Correct!</strong>"; 
+                    feedbackBox.innerHTML = "<strong>✓ CLEARANCE CONFIRMED.</strong> Correct response."; 
                     feedbackBox.classList.add('feedback-correct'); 
                 } else { 
-                    feedbackBox.innerHTML = "<strong>Incorrect.</strong> The correct answer is highlighted in green."; 
+                    feedbackBox.innerHTML = "<strong>✕ FLIGHT ADVISORY.</strong> Incorrect response. The correct answer is highlighted above."; 
                     feedbackBox.classList.add('feedback-wrong'); 
                 } 
             } else {
                 feedbackBox.style.display = 'none';
             }
-            
+
             document.getElementById('quiz-prev-btn').disabled = currentQIndex === 0; 
             const nextBtn = document.getElementById('quiz-next-btn'); 
             if (selectedAns === null) { 
                 nextBtn.disabled = true; 
-                nextBtn.textContent = "Next"; 
+                nextBtn.textContent = "Next →"; 
             } else { 
                 nextBtn.disabled = false; 
-                nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Finish" : "Next"; 
+                nextBtn.textContent = (currentQIndex === activeQuizData.length - 1) ? "Complete Debrief →" : "Next →"; 
             } 
         }
 
@@ -264,13 +310,26 @@
                 currentQIndex++; renderQuestion(); 
             } else { 
                 switchView('quiz-finish-screen'); 
-                document.getElementById('final-score').textContent = updateScore(); 
-                document.getElementById('total-questions').textContent = activeQuizData.length; 
+                const score = updateScore();
+                const total = activeQuizData.length;
+                const pct = Math.round((score / total) * 100);
+                document.getElementById('final-score').textContent = score; 
+                document.getElementById('total-questions').textContent = total; 
+                document.getElementById('final-percentage').textContent = `${pct}%`;
+                
+                const evalBox = document.getElementById('score-eval-text');
+                if (pct >= 70) {
+                    evalBox.innerHTML = `<span class="eval-cleared">✓ FLIGHT CHECK CLEARED — DGCA STANDARD ATTAINED (PASS >= 70%)</span>`;
+                    playCockpitBeep('correct');
+                } else {
+                    evalBox.innerHTML = `<span class="eval-retry">⚠ RE-FLIGHT RECOMMENDED — DGCA PASS STANDARD IS 70%</span>`;
+                    playCockpitBeep('wrong');
+                }
             } 
         }
 
         // ==========================================
-        // DATA BANK: NUMERICALS (CHAPTER 2) - 40 QUESTIONS
+        // DATA BANK: NUMERICALS (CHAPTER 2) - UNMODIFIED
         // ==========================================
         const numericalsData = [
             { q: "An A/C flying from place X (27&deg;27'N 030&deg;24'E) to Y (27&deg;27'N 108&deg;47'E). Find rhumb line Distance.", ans: "4173.5 NM", sol: "D'long = 108&deg;47'E - 030&deg;24'E = 78&deg;23'<br><br>RL Dist = Departure = D'long (in minutes) &times; cos(Lat)<br>Departure = (78 &times; 60 + 23) &times; cos(27&deg;27')<br>Departure = 4703 &times; 0.887<br><br><strong>RL Dist = 4173.5 NM</strong>" },
@@ -316,7 +375,7 @@
         ];
 
         let activeQuizDataNum = [], currentNumIndex = 0;
-        
+
         function startNumericals() { 
             switchView('numerical-linear-page'); 
             activeQuizDataNum = numericalsData; 
@@ -326,22 +385,32 @@
 
         function renderNumerical() { 
             if (activeQuizDataNum.length === 0) return; 
-            
+
             const qData = activeQuizDataNum[currentNumIndex]; 
-            document.getElementById('num-counter').innerText = `Numerical ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
+            document.getElementById('num-counter').innerText = `Numerical Problem ${currentNumIndex + 1} of ${activeQuizDataNum.length}`; 
             document.getElementById('num-progress').style.width = `${((currentNumIndex + 1) / activeQuizDataNum.length) * 100}%`; 
             document.getElementById('num-q-text').innerHTML = qData.q; 
-            
+
             const ansBox = document.getElementById('num-ans-box'); 
-            ansBox.innerHTML = `<strong>Answer:</strong> ${qData.ans}`; 
+            ansBox.innerHTML = `<strong>🎯 TARGET ANSWER:</strong> ${qData.ans}`; 
             ansBox.style.display = 'none'; 
-            
+
             const solBox = document.getElementById('num-sol-box'); 
-            solBox.innerHTML = `<strong>Step-by-Step Solution:</strong><br><br>${qData.sol}`; 
+            solBox.innerHTML = `<strong>📜 STEP-BY-STEP DERIVATION:</strong><br><br>${qData.sol}`; 
             solBox.style.display = 'none'; 
-            
+
             document.getElementById('num-prev-btn').disabled = currentNumIndex === 0; 
             document.getElementById('num-next-btn').disabled = currentNumIndex === activeQuizDataNum.length - 1; 
+        }
+
+        function revealNumAns() {
+            document.getElementById('num-ans-box').style.display = 'block';
+            playCockpitBeep('click');
+        }
+
+        function revealNumSol() {
+            document.getElementById('num-sol-box').style.display = 'block';
+            playCockpitBeep('click');
         }
 
         function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
