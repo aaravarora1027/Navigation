@@ -21,10 +21,14 @@
             <span class="zulu-clock">ZULU: 00:00:00Z</span>
         </div>
         <div class="hud-right">
-            <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
-                <span>🔊 AUDIO ON</span>
-            </button>
-            <span class="hud-pill status-gold">DGCA CPL</span>
+            <div class="hud-interactive-tools">
+                <button class="hud-tool-btn" onclick="openE6BModal()">📐 E6B</button>
+                <button class="hud-tool-btn" onclick="toggleKneeboard()">📋 KNEEBOARD</button>
+                <button class="hud-tool-btn" onclick="cycleCockpitTheme()">🎨 <span class="theme-toggle-label">EFIS</span></button>
+                <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
+                    <span>🔊 AUDIO ON</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -92,6 +96,20 @@
                     <span style="opacity: 0.6; font-size: 0.8rem;" id="quiz-accuracy">/ 0%</span>
                 </div>
             </div>
+
+            <!-- Quiz In-Flight Toolbar -->
+            <div class="quiz-tool-strip">
+                <button class="tool-strip-btn" id="flag-q-btn" onclick="toggleFlagCurrentQuestion(currentQuizIndex)">
+                    <span>⚐ FLAG FOR REVIEW</span>
+                </button>
+                <button class="tool-strip-btn" onclick="openE6BModal()">
+                    <span>📐 E6B COMPUTER</span>
+                </button>
+                <button class="tool-strip-btn" onclick="toggleKneeboard()">
+                    <span>📋 SCRATCHPAD</span>
+                </button>
+            </div>
+
             <div class="progress-bar-container"><div class="progress-bar" id="quiz-progress"></div></div>
             
             <div class="content-area">
@@ -143,6 +161,17 @@
                 </div>
                 <button class="nav-btn" onclick="switchView('module-page')">✕ Exit Numericals</button>
             </div>
+
+            <!-- In-Flight Tool Strip -->
+            <div class="quiz-tool-strip">
+                <button class="tool-strip-btn" onclick="openE6BModal()">
+                    <span>📐 E6B COMPUTER</span>
+                </button>
+                <button class="tool-strip-btn" onclick="toggleKneeboard()">
+                    <span>📋 SCRATCHPAD</span>
+                </button>
+            </div>
+
             <div class="progress-bar-container"><div class="progress-bar" id="num-progress"></div></div>
             
             <div class="content-area">
@@ -268,6 +297,7 @@
             document.getElementById('quiz-progress').style.width = `${((currentQuizIndex + 1) / quizData.length) * 100}%`;
             document.getElementById('quiz-q-text').innerHTML = qData.q;
             updateQuizScore();
+            updateFlagButtonUI(currentQuizIndex);
             
             const optionsContainer = document.getElementById('quiz-options');
             optionsContainer.innerHTML = '';

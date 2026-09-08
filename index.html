@@ -121,6 +121,26 @@
             50% { transform: scale(1, 0.005); filter: brightness(3); opacity: 0.9; }
             100% { transform: scale(0, 0); filter: brightness(0); opacity: 0; }
         }
+
+        /* Heading Bug Instrument */
+        .cockpit-attitude-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 30px;
+            padding: 4px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+        }
+
+        .plane-gyro-icon {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.15s ease-out;
+            fill: var(--cyan-primary);
+        }
     </style>
 </head>
 <body>
@@ -130,19 +150,34 @@
         <div class="hud-left">
             <span class="hud-pill status-green">
                 <span class="hud-dot"></span>
-                TERMINAL ONLINE
+                AIR-NAV TERMINAL ONLINE
             </span>
+            <div class="cockpit-attitude-mini" id="gyro-widget">
+                <svg class="plane-gyro-icon" id="plane-gyro-icon" viewBox="0 0 24 24">
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                </svg>
+                <span>HDG: <strong id="hdg-readout" style="color: var(--cyan-primary);">360°</strong></span>
+            </div>
             <span>CALLSIGN: <strong>CPL-GROUND</strong></span>
-            <span>DGCA AIR-NAV MATRIX</span>
         </div>
         <div class="hud-center">
             <span class="zulu-clock">ZULU: 00:00:00Z</span>
         </div>
         <div class="hud-right">
-            <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
-                <span>🔊 AUDIO ON</span>
-            </button>
-            <span class="hud-pill status-gold">IFR CERTIFIED</span>
+            <div class="hud-interactive-tools">
+                <button class="hud-tool-btn" onclick="openE6BModal()">
+                    📐 E6B COMPUTER
+                </button>
+                <button class="hud-tool-btn" onclick="toggleKneeboard()">
+                    📋 KNEEBOARD
+                </button>
+                <button class="hud-tool-btn" onclick="cycleCockpitTheme()">
+                    🎨 <span class="theme-toggle-label">EFIS CYAN</span>
+                </button>
+                <button class="hud-sound-toggle" onclick="toggleCockpitSound()">
+                    <span>🔊 AUDIO ON</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -152,7 +187,7 @@
         <!-- 1. LANDING PAGE -->
         <div id="landing-page" class="view-section" style="display: flex;">
             
-            <!-- Pilot Wings SVG Crest -->
+            <!-- Pilot Wings SVG Crest with ambient pulse -->
             <svg class="wings-insignia" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="goldWings" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -187,7 +222,7 @@
                     <div class="landing-stat-label">Active Modules</div>
                 </div>
                 <div class="landing-stat-box">
-                    <div class="landing-stat-val">820+</div>
+                    <div class="landing-stat-val">828+</div>
                     <div class="landing-stat-label">Exam Questions</div>
                 </div>
                 <div class="landing-stat-box">
@@ -200,11 +235,12 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="initSystem()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+            <!-- Enhanced Launch Button with Runway Takeoff Animation Trigger -->
+            <button class="btn btn-primary" style="padding: 16px 44px; font-size: 1.1rem;" onclick="initSystem()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
                 </svg>
-                Initialize Flight Deck
+                Launch Flight Takeoff & Initialize Deck
             </button>
         </div>
 
@@ -441,12 +477,13 @@
             playCockpitBeep('click');
         }
 
-        // Visibility toggles with audio
+        // Initialize System with Takeoff Animation
         function initSystem() {
-            playCockpitBeep('correct');
-            document.getElementById('landing-page').style.display = 'none';
-            document.getElementById('chapters-page').style.display = 'flex';
-            renderChapterGrid();
+            launchTakeoffSequence(() => {
+                document.getElementById('landing-page').style.display = 'none';
+                document.getElementById('chapters-page').style.display = 'flex';
+                renderChapterGrid();
+            });
         }
 
         function powerOff() {
@@ -470,6 +507,19 @@
             document.getElementById('formula-modal').classList.remove('active');
             playCockpitBeep('click');
         }
+
+        // Interactive mouse gyro plane tilt
+        document.addEventListener('mousemove', (e) => {
+            const planeIcon = document.getElementById('plane-gyro-icon');
+            const hdgReadout = document.getElementById('hdg-readout');
+            if (planeIcon && hdgReadout) {
+                const xPct = (e.clientX / window.innerWidth) - 0.5;
+                const deg = Math.round(xPct * 40);
+                const compassHdg = Math.round(((xPct + 0.5) * 360)) % 360;
+                planeIcon.style.transform = `rotate(${deg}deg)`;
+                hdgReadout.textContent = `${String(compassHdg).padStart(3, '0')}°`;
+            }
+        });
 
         // Initial setup
         renderChapterGrid();
