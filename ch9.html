@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CH 9 | Air Navigation Flight Deck</title>
-    <link rel="stylesheet" href="css/pilot-theme.css">
+    <link rel="stylesheet" href="css/pilot-theme.css?v=2.2">
 </head>
 <body>
 
@@ -22,6 +22,7 @@
         </div>
         <div class="hud-right">
             <div class="hud-interactive-tools">
+                <button class="hud-tool-btn" onclick="openChapterJumpModal()">🗂️ JUMP CHAPTER</button>
                 <button class="hud-tool-btn" onclick="openE6BModal()">📐 E6B</button>
                 <button class="hud-tool-btn" onclick="toggleKneeboard()">📋 KNEEBOARD</button>
                 <button class="hud-tool-btn" onclick="cycleCockpitTheme()">🎨 <span class="theme-toggle-label">EFIS</span></button>
@@ -48,6 +49,7 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button class="nav-btn" onclick="openChapterJumpModal()">🗂️ Jump Chapter</button>
                     <a href="index.html" class="nav-btn">← Flight Hub</a>
                 </div>
             </div>
@@ -227,7 +229,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/pilot-cockpit.js"></script>
+    <script src="js/pilot-cockpit.js?v=2.2"></script>
     <script>
         const CHAPTER_NUM = 9;
 

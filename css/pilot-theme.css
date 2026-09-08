@@ -308,7 +308,8 @@ body::before {
     flex-direction: column;
     position: relative;
     z-index: 1;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
     transition: border-color 0.3s;
 }
 
@@ -1621,10 +1622,11 @@ body::before {
 
 .chapter-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-    overflow-y: auto;
-    padding: 5px;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 20px;
+    width: 100%;
+    min-height: 260px;
+    padding: 8px 4px 30px;
 }
 
 .chapter-card {
@@ -1923,4 +1925,98 @@ body::before {
     margin-bottom: 5px;
     color: var(--text-muted);
 }
+
+/* ==========================================================================
+   NON-LINEAR STUDY ORDER BANNER & QUICK JUMP SELECTOR
+   ========================================================================== */
+.non-linear-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(0, 210, 255, 0.07);
+    border: 1px solid rgba(0, 210, 255, 0.25);
+    border-left: 4px solid var(--cyan-primary);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    font-size: 0.88rem;
+    color: var(--text-bright);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.non-linear-banner .banner-icon {
+    font-size: 1.3rem;
+    color: var(--gold-accent);
+}
+
+.non-linear-banner strong {
+    color: var(--cyan-primary);
+    font-family: var(--font-mono);
+    letter-spacing: 0.5px;
+}
+
+.quick-jump-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 6px 4px;
+}
+
+.quick-jump-ch-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: var(--text-main);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.quick-jump-ch-card:hover {
+    background: rgba(0, 210, 255, 0.12);
+    border-color: var(--cyan-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--cyan-glow);
+}
+
+.quick-jump-ch-card .qj-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.quick-jump-ch-card .qj-num {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--cyan-primary);
+    font-weight: 700;
+}
+
+.quick-jump-ch-card .qj-badge {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--green-cleared);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    font-weight: 700;
+}
+
+.quick-jump-ch-card .qj-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-bright);
+}
+
+.quick-jump-ch-card .qj-tag {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
 

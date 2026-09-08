@@ -841,9 +841,77 @@ function getOverallSyllabusProgress() {
 
 function resetAllProgress() {
     for (let i = 1; i <= 11; i++) {
-        localStorage.removeItem(`airnav_ch${i}_quiz`);
-        localStorage.removeItem(`airnav_ch${i}_num`);
+        try {
+            localStorage.removeItem(`airnav_ch${i}_quiz`);
+            localStorage.removeItem(`airnav_ch${i}_num`);
+        } catch(e) {}
     }
-    localStorage.removeItem('pilot_flagged_q');
+    try {
+        localStorage.removeItem('pilot_flagged_q');
+    } catch(e) {}
 }
+
+// ==========================================
+// 11. QUICK CHAPTER SELECTOR MODAL (ANY ORDER JUMP)
+// ==========================================
+function openChapterJumpModal() {
+    let modal = document.getElementById('chapter-selector-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'chapter-selector-modal';
+        modal.className = 'formula-modal-overlay';
+        
+        const chaptersList = [
+            { num: 1, name: "The Earth", tag: "Earth Geometry" },
+            { num: 2, name: "Distances on Earth's Surface", tag: "Distances & NM" },
+            { num: 3, name: "Convergency", tag: "Meridians & Great Circles" },
+            { num: 4, name: "Payload", tag: "Mass & Balance & Fuel" },
+            { num: 5, name: "Compass & Direction", tag: "Magnetism & Drift" },
+            { num: 6, name: "Dead Reckoning", tag: "Triangle of Velocities" },
+            { num: 7, name: "In Flight Navigation", tag: "160 Flight Problems" },
+            { num: 8, name: "Scale & Projections", tag: "Mercator & Lamberts" },
+            { num: 9, name: "INS/IRS", tag: "Schuler Tuning & Gyros" },
+            { num: 10, name: "Solar System & Time", tag: "LMT, UTC & Twilight" },
+            { num: 11, name: "PNR/CP", tag: "Critical Point & PNR" }
+        ];
+
+        let cardsHtml = chaptersList.map(ch => `
+            <a href="ch${ch.num}.html" class="quick-jump-ch-card">
+                <div class="qj-top">
+                    <span class="qj-num">MODULE 0${ch.num < 10 ? ch.num : ch.num}</span>
+                    <span class="qj-badge">UNLOCKED</span>
+                </div>
+                <div class="qj-name">${ch.name}</div>
+                <div class="qj-tag">${ch.tag}</div>
+            </a>
+        `).join('');
+
+        modal.innerHTML = `
+            <div class="formula-modal-card" style="max-width: 750px;">
+                <div class="jump-modal-header">
+                    <h3 style="font-family: var(--font-mono); color: var(--cyan-primary); display: flex; align-items: center; gap: 8px;">
+                        <span>✈️ QUICK CHAPTER JUMP SELECTOR</span>
+                    </h3>
+                    <button class="nav-btn" style="padding: 4px 12px;" onclick="closeChapterJumpModal()">✕ CLOSE</button>
+                </div>
+                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+                    <strong style="color: var(--gold-accent);">Non-linear study freedom:</strong> Jump directly to any DGCA CPL module at any time. Study in any order without prerequisites:
+                </p>
+                <div class="quick-jump-grid">
+                    ${cardsHtml}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    modal.classList.add('active');
+    if (typeof playCockpitBeep === 'function') playCockpitBeep('click');
+}
+
+function closeChapterJumpModal() {
+    const modal = document.getElementById('chapter-selector-modal');
+    if (modal) modal.classList.remove('active');
+    if (typeof playCockpitBeep === 'function') playCockpitBeep('click');
+}
+
 

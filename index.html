@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Air Navigation | DGCA CPL Ground School Command Center</title>
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/pilot-theme.css">
+    <link rel="stylesheet" href="css/pilot-theme.css?v=2.2">
     <style>
         /* Specific Styles for Hub */
         .search-container {
@@ -165,6 +165,9 @@
         </div>
         <div class="hud-right">
             <div class="hud-interactive-tools">
+                <button class="hud-tool-btn" onclick="openChapterJumpModal()">
+                    🗂️ JUMP CHAPTER
+                </button>
                 <button class="hud-tool-btn" onclick="openE6BModal()">
                     📐 E6B COMPUTER
                 </button>
@@ -242,6 +245,9 @@
                 </svg>
                 Launch Flight Takeoff & Initialize Deck
             </button>
+            <button class="nav-btn" style="margin-top: 14px; font-size: 0.88rem; padding: 8px 20px; opacity: 0.9;" onclick="skipDirectToSyllabus()">
+                ⚡ Enter Syllabus Matrix Directly (Skip Cinema)
+            </button>
         </div>
 
         <!-- 2. CHAPTERS LIST / SYLLABUS HUB -->
@@ -291,6 +297,14 @@
                 </div>
             </div>
 
+            <!-- Non-Linear Order Advisory Banner -->
+            <div class="non-linear-banner">
+                <span class="banner-icon">⚡</span>
+                <div>
+                    <strong>FREE-FLIGHT CURRICULUM:</strong> All 11 active DGCA modules are 100% unlocked. You can drill any chapter in any order — there is no required chronological sequence or prerequisite lockout.
+                </div>
+            </div>
+
             <!-- Filter & Search Controls -->
             <div class="chapter-filter-bar">
                 <div class="search-container">
@@ -304,9 +318,9 @@
                 </div>
 
                 <div class="chapter-filter-pills">
-                    <button class="filter-pill active" onclick="setFilter('all', this)">All (30)</button>
-                    <button class="filter-pill" onclick="setFilter('active', this)">Active Modules (1-11)</button>
-                    <button class="filter-pill" onclick="setFilter('phase2', this)">Phase II In-Prep (12-30)</button>
+                    <button class="filter-pill active" onclick="setFilter('active', this)">Active Modules (1-11) • All Unlocked</button>
+                    <button class="filter-pill" onclick="setFilter('all', this)">All Modules (30)</button>
+                    <button class="filter-pill" onclick="setFilter('phase2', this)">Phase II (12-30)</button>
                 </div>
             </div>
 
@@ -390,7 +404,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="js/pilot-cockpit.js"></script>
+    <script src="js/pilot-cockpit.js?v=2.2"></script>
     <script>
         // Dictionary for chapter names - EXACT DATA PRESERVED
         const chapterTitles = { 
@@ -422,10 +436,36 @@
             11: { type: "Flight Planning", stats: "135 Advanced Calculations", tag: "Critical Point & PNR" }
         };
 
-        let currentFilter = 'all';
+        let currentFilter = 'active'; // Defaults to Active Modules 1-11 so all 11 unlocked chapters are immediately displayed
+
+        function safeGetOverallSyllabusProgress() {
+            if (typeof getOverallSyllabusProgress === 'function') {
+                try { return getOverallSyllabusProgress(); } catch(e) {}
+            }
+            return { quizDone: 0, quizAll: 358, numDone: 0, numAll: 470, grandDone: 0, grandTotal: 828, grandPct: 0 };
+        }
+
+        function safeGetChapterProgress(chNum) {
+            if (typeof getChapterProgress === 'function') {
+                try { return getChapterProgress(chNum); } catch(e) {}
+            }
+            const fallbackTotals = {
+                1: { q: 19, n: 10 }, 2: { q: 16, n: 40 }, 3: { q: 12, n: 32 }, 4: { q: 22, n: 32 },
+                5: { q: 6, n: 14 }, 6: { q: 4, n: 26 }, 7: { q: 100, n: 60 }, 8: { q: 72, n: 89 },
+                9: { q: 66, n: 3 }, 10: { q: 41, n: 29 }, 11: { q: 0, n: 135 }
+            };
+            const meta = fallbackTotals[chNum] || { q: 0, n: 0 };
+            return {
+                quiz: { count: 0, total: meta.q, pct: 0 },
+                num: { count: 0, total: meta.n, pct: 0 },
+                overallPct: 0,
+                totalDone: 0,
+                totalItems: meta.q + meta.n
+            };
+        }
 
         function updateMasterProgressUI() {
-            const overall = getOverallSyllabusProgress();
+            const overall = safeGetOverallSyllabusProgress();
             const pctEl = document.getElementById('overall-total-pct');
             const countsEl = document.getElementById('overall-total-counts');
             const quizCountsEl = document.getElementById('overall-quiz-counts');
@@ -441,121 +481,133 @@
 
         function confirmResetProgress() {
             if (confirm("⚠️ RESET FLIGHT LOGS: Are you sure you want to reset all tracked question progress? Your exam drill logs will be cleared.")) {
-                resetAllProgress();
+                if (typeof resetAllProgress === 'function') resetAllProgress();
                 updateMasterProgressUI();
                 renderChapterGrid();
-                playCockpitBeep('click');
+                if (typeof playCockpitBeep === 'function') playCockpitBeep('click');
             }
         }
 
-        // Render 30 Chapter Links with Dual Progress Tracks
+        // Render 30 Chapter Links with Dual Progress Tracks & Unrestricted Access
         function renderChapterGrid() {
-            updateMasterProgressUI();
+            try {
+                updateMasterProgressUI();
+            } catch(e) {
+                console.warn("Progress bar warning:", e);
+            }
+
             const chapterContainer = document.getElementById('chapter-grid-container');
+            if (!chapterContainer) return;
             chapterContainer.innerHTML = '';
 
-            const searchTerm = document.getElementById('chapter-search').value.toLowerCase().trim();
+            const searchInput = document.getElementById('chapter-search');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
             for (let i = 1; i <= 30; i++) {
-                const isOnline = i <= 11;
-                const titleText = chapterTitles[i] || `Navigation Subject Part ${i}`;
-                const meta = chapterMeta[i] || { type: "DGCA Phase II", stats: "Curriculum In Prep", tag: "Clearance Pending" };
+                try {
+                    const isOnline = i <= 11;
+                    const titleText = chapterTitles[i] || `Navigation Subject Part ${i}`;
+                    const meta = chapterMeta[i] || { type: "DGCA Phase II", stats: "Curriculum In Prep", tag: "Expansion Module" };
 
-                // Filtering logic
-                if (currentFilter === 'active' && !isOnline) continue;
-                if (currentFilter === 'phase2' && isOnline) continue;
+                    // Filtering logic
+                    if (currentFilter === 'active' && !isOnline) continue;
+                    if (currentFilter === 'phase2' && isOnline) continue;
 
-                if (searchTerm) {
-                    const matchNum = `ch ${i}`.includes(searchTerm) || `${i}` === searchTerm;
-                    const matchTitle = titleText.toLowerCase().includes(searchTerm);
-                    const matchTag = meta.tag.toLowerCase().includes(searchTerm);
-                    if (!matchNum && !matchTitle && !matchTag) continue;
-                }
-
-                let a = document.createElement('a');
-                a.className = isOnline ? 'chapter-card' : 'chapter-card is-locked';
-
-                if (isOnline) {
-                    a.href = `ch${i}.html`;
-                } else {
-                    a.href = 'javascript:void(0)';
-                    a.onclick = () => {
-                        playCockpitBeep('wrong');
-                        alert(`✈️ FLIGHT ADVISORY: Chapter ${i} (${titleText}) is part of Phase II DGCA syllabus synchronization. Please drill Active Modules 1 through 11.`);
-                    };
-                }
-
-                let progressHTML = '';
-                let statusText = 'FLIGHT READY';
-                let statusClass = '';
-
-                if (isOnline) {
-                    const p = getChapterProgress(i);
-                    if (p.overallPct >= 70) {
-                        statusText = `CLEARED (${p.overallPct}%)`;
-                        statusClass = 'status-cleared';
-                    } else if (p.overallPct > 0) {
-                        statusText = `DRILLING (${p.overallPct}%)`;
-                        statusClass = 'status-progress';
-                    } else {
-                        statusText = `READY (0%)`;
+                    if (searchTerm) {
+                        const matchNum = `ch ${i}`.includes(searchTerm) || `${i}` === searchTerm;
+                        const matchTitle = titleText.toLowerCase().includes(searchTerm);
+                        const matchTag = meta.tag.toLowerCase().includes(searchTerm);
+                        if (!matchNum && !matchTitle && !matchTag) continue;
                     }
 
-                    progressHTML = `
-                        <div class="chapter-progress-track">
-                            <div class="progress-bar-subrow">
-                                <div class="progress-sublabel">
-                                    <span>THEORY QUIZ</span>
-                                    <span style="color: var(--cyan-primary);">${p.quiz.total > 0 ? `${p.quiz.count}/${p.quiz.total} (${p.quiz.pct}%)` : 'N/A'}</span>
+                    let a = document.createElement('a');
+                    a.className = isOnline ? 'chapter-card' : 'chapter-card is-locked';
+
+                    if (isOnline) {
+                        a.href = `ch${i}.html`;
+                    } else {
+                        a.href = 'javascript:void(0)';
+                        a.onclick = () => {
+                            if (typeof playCockpitBeep === 'function') playCockpitBeep('wrong');
+                            alert(`✈️ FLIGHT ADVISORY: Chapter ${i} (${titleText}) is part of DGCA Phase II expansion curriculum. Modules 1 through 11 are 100% unlocked and can be drilled in any order!`);
+                        };
+                    }
+
+                    let progressHTML = '';
+                    let statusText = 'UNLOCKED';
+                    let statusClass = 'status-cleared';
+
+                    if (isOnline) {
+                        const p = safeGetChapterProgress(i);
+                        if (p.overallPct >= 70) {
+                            statusText = `CLEARED (${p.overallPct}%)`;
+                            statusClass = 'status-cleared';
+                        } else if (p.overallPct > 0) {
+                            statusText = `IN PROGRESS (${p.overallPct}%)`;
+                            statusClass = 'status-progress';
+                        } else {
+                            statusText = `UNLOCKED • READY`;
+                            statusClass = 'status-cleared';
+                        }
+
+                        progressHTML = `
+                            <div class="chapter-progress-track">
+                                <div class="progress-bar-subrow">
+                                    <div class="progress-sublabel">
+                                        <span>THEORY QUIZ</span>
+                                        <span style="color: var(--cyan-primary);">${p.quiz.total > 0 ? `${p.quiz.count}/${p.quiz.total} (${p.quiz.pct}%)` : 'N/A'}</span>
+                                    </div>
+                                    <div class="progress-track-bg">
+                                        <div class="progress-track-fill fill-cyan" style="width: ${p.quiz.pct}%;"></div>
+                                    </div>
                                 </div>
-                                <div class="progress-track-bg">
-                                    <div class="progress-track-fill fill-cyan" style="width: ${p.quiz.pct}%;"></div>
+                                <div class="progress-bar-subrow">
+                                    <div class="progress-sublabel">
+                                        <span>NUMERICALS</span>
+                                        <span style="color: var(--gold-accent);">${p.num.count}/${p.num.total} (${p.num.pct}%)</span>
+                                    </div>
+                                    <div class="progress-track-bg">
+                                        <div class="progress-track-fill fill-amber" style="width: ${p.num.pct}%;"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="progress-bar-subrow">
-                                <div class="progress-sublabel">
-                                    <span>NUMERICALS</span>
-                                    <span style="color: var(--gold-accent);">${p.num.count}/${p.num.total} (${p.num.pct}%)</span>
-                                </div>
-                                <div class="progress-track-bg">
-                                    <div class="progress-track-fill fill-amber" style="width: ${p.num.pct}%;"></div>
-                                </div>
+                        `;
+                    } else {
+                        statusText = 'PHASE II';
+                        statusClass = 'locked';
+                    }
+
+                    a.innerHTML = `
+                        <div>
+                            <div class="chapter-card-top">
+                                <span class="chapter-num">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                                    </svg>
+                                    MODULE ${i < 10 ? '0' + i : i}
+                                </span>
+                                <span class="chapter-status-pill ${statusClass}">
+                                    ${statusText}
+                                </span>
                             </div>
+                            <div class="chapter-name">${titleText}</div>
+                            <div style="font-size: 0.8rem; color: var(--cyan-primary); font-family: var(--font-mono);">${meta.tag}</div>
+                        </div>
+                        
+                        ${progressHTML}
+
+                        <div class="chapter-meta">
+                            <span>${meta.stats}</span>
+                            <span style="color: ${isOnline ? 'var(--cyan-primary)' : 'var(--text-dim)'}; font-weight: 700;">
+                                ${isOnline ? 'DRILL MODULE →' : 'IN PREP'}
+                            </span>
                         </div>
                     `;
-                } else {
-                    statusText = 'IN PREP';
-                    statusClass = 'locked';
+
+                    chapterContainer.appendChild(a);
+                } catch(cardErr) {
+                    console.error('Error rendering card', i, cardErr);
                 }
-
-                a.innerHTML = `
-                    <div>
-                        <div class="chapter-card-top">
-                            <span class="chapter-num">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                                </svg>
-                                MODULE ${i < 10 ? '0' + i : i}
-                            </span>
-                            <span class="chapter-status-pill ${statusClass}">
-                                ${statusText}
-                            </span>
-                        </div>
-                        <div class="chapter-name">${titleText}</div>
-                        <div style="font-size: 0.8rem; color: var(--cyan-primary); font-family: var(--font-mono);">${meta.tag}</div>
-                    </div>
-                    
-                    ${progressHTML}
-
-                    <div class="chapter-meta">
-                        <span>${meta.stats}</span>
-                        <span style="color: ${isOnline ? 'var(--cyan-primary)' : 'var(--text-dim)'}; font-weight: 700;">
-                            ${isOnline ? 'ENGAGE →' : 'LOCKED'}
-                        </span>
-                    </div>
-                `;
-
-                chapterContainer.appendChild(a);
             }
         }
 
@@ -566,18 +618,30 @@
         function setFilter(filterType, btn) {
             currentFilter = filterType;
             document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if (btn) btn.classList.add('active');
             renderChapterGrid();
-            playCockpitBeep('click');
+            if (typeof playCockpitBeep === 'function') playCockpitBeep('click');
         }
 
         // Initialize System with Takeoff Animation
         function initSystem() {
-            launchTakeoffSequence(() => {
-                document.getElementById('landing-page').style.display = 'none';
-                document.getElementById('chapters-page').style.display = 'flex';
-                renderChapterGrid();
-            });
+            if (typeof launchTakeoffSequence === 'function') {
+                launchTakeoffSequence(() => {
+                    document.getElementById('landing-page').style.display = 'none';
+                    document.getElementById('chapters-page').style.display = 'flex';
+                    renderChapterGrid();
+                });
+            } else {
+                skipDirectToSyllabus();
+            }
+        }
+
+        // Direct entry bypass button
+        function skipDirectToSyllabus() {
+            if (typeof playCockpitBeep === 'function') playCockpitBeep('correct');
+            document.getElementById('landing-page').style.display = 'none';
+            document.getElementById('chapters-page').style.display = 'flex';
+            renderChapterGrid();
         }
 
         function powerOff() {
