@@ -268,6 +268,29 @@
                 </div>
             </div>
 
+            <!-- Master Syllabus Progress Card -->
+            <div class="overall-syllabus-card" id="master-progress-card">
+                <div class="overall-stats-grid">
+                    <div class="overall-stat-item">
+                        <span class="label">Syllabus Completion:</span>
+                        <span class="val" id="overall-total-pct" style="color: var(--cyan-primary);">0%</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);" id="overall-total-counts">(0 / 828)</span>
+                    </div>
+                    <div class="overall-stat-item">
+                        <span class="label">Theory Done:</span>
+                        <span class="val" id="overall-quiz-counts" style="color: var(--cyan-primary); font-size: 1.1rem;">0 / 358</span>
+                    </div>
+                    <div class="overall-stat-item">
+                        <span class="label">Numericals Done:</span>
+                        <span class="val" id="overall-num-counts" style="color: var(--gold-accent); font-size: 1.1rem;">0 / 470</span>
+                    </div>
+                    <button class="nav-btn" style="padding: 4px 10px; font-size: 0.78rem;" onclick="confirmResetProgress()">↺ Reset Logs</button>
+                </div>
+                <div class="progress-track-bg" style="height: 8px;">
+                    <div class="progress-track-fill fill-cyan" id="master-progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
             <!-- Filter & Search Controls -->
             <div class="chapter-filter-bar">
                 <div class="search-container">
@@ -384,25 +407,50 @@
             11: "PNR/CP"
         };
 
-        // Chapter Subtitle / Breakdown Metadata for Active Modules
+        // Chapter Subtitle / Breakdown Metadata for Active Modules (100% Exact Counts)
         const chapterMeta = {
             1: { type: "Theory & Calculations", stats: "19 MCQs • 10 Numericals", tag: "Earth Geometry" },
             2: { type: "Earth Surface", stats: "16 MCQs • 40 Numericals", tag: "Distances & NM" },
-            3: { type: "Convergency", stats: "14 MCQs • 30 Numericals", tag: "Meridians & Great Circles" },
-            4: { type: "Mass & Balance", stats: "14 MCQs • 40 Numericals", tag: "Payload & Fuel" },
-            5: { type: "Directional Gyro", stats: "10 MCQs • 10 Numericals", tag: "Magnetism & Drift" },
-            6: { type: "DR Navigation", stats: "10 MCQs • 20 Numericals", tag: "Triangle of Velocities" },
-            7: { type: "Descents & Climes", stats: "100 Rapid • 60 Problems", tag: "160 Flight Problems" },
-            8: { type: "Aeronautical Charts", stats: "50 MCQs • 111 Numericals", tag: "Mercator & Lamberts" },
-            9: { type: "Inertial Systems", stats: "19 MCQs • 50 Numericals", tag: "Schuler Tuning & Gyros" },
-            10: { type: "Celestial & Time", stats: "25 MCQs • 45 Numericals", tag: "LMT, UTC & Twilight" },
-            11: { type: "Flight Planning", stats: "135 Advanced Problems", tag: "Critical Point & PNR" }
+            3: { type: "Convergency", stats: "12 MCQs • 32 Numericals", tag: "Meridians & Great Circles" },
+            4: { type: "Mass & Balance", stats: "22 MCQs • 32 Numericals", tag: "Payload & Fuel" },
+            5: { type: "Directional Gyro", stats: "6 MCQs • 14 Numericals", tag: "Magnetism & Drift" },
+            6: { type: "DR Navigation", stats: "4 MCQs • 26 Numericals", tag: "Triangle of Velocities" },
+            7: { type: "Descents & Climbs", stats: "100 Practice • 60 Main", tag: "160 Flight Problems" },
+            8: { type: "Aeronautical Charts", stats: "72 MCQs • 89 Numericals", tag: "Mercator & Lamberts" },
+            9: { type: "Inertial Systems", stats: "66 MCQs • 3 Numericals", tag: "Schuler Tuning & Gyros" },
+            10: { type: "Celestial & Time", stats: "41 MCQs • 29 Numericals", tag: "LMT, UTC & Twilight" },
+            11: { type: "Flight Planning", stats: "135 Advanced Calculations", tag: "Critical Point & PNR" }
         };
 
         let currentFilter = 'all';
 
-        // Render 30 Chapter Links
+        function updateMasterProgressUI() {
+            const overall = getOverallSyllabusProgress();
+            const pctEl = document.getElementById('overall-total-pct');
+            const countsEl = document.getElementById('overall-total-counts');
+            const quizCountsEl = document.getElementById('overall-quiz-counts');
+            const numCountsEl = document.getElementById('overall-num-counts');
+            const barEl = document.getElementById('master-progress-bar');
+
+            if (pctEl) pctEl.textContent = `${overall.grandPct}%`;
+            if (countsEl) countsEl.textContent = `(${overall.grandDone} / ${overall.grandTotal})`;
+            if (quizCountsEl) quizCountsEl.textContent = `${overall.quizDone} / ${overall.quizAll}`;
+            if (numCountsEl) numCountsEl.textContent = `${overall.numDone} / ${overall.numAll}`;
+            if (barEl) barEl.style.width = `${overall.grandPct}%`;
+        }
+
+        function confirmResetProgress() {
+            if (confirm("⚠️ RESET FLIGHT LOGS: Are you sure you want to reset all tracked question progress? Your exam drill logs will be cleared.")) {
+                resetAllProgress();
+                updateMasterProgressUI();
+                renderChapterGrid();
+                playCockpitBeep('click');
+            }
+        }
+
+        // Render 30 Chapter Links with Dual Progress Tracks
         function renderChapterGrid() {
+            updateMasterProgressUI();
             const chapterContainer = document.getElementById('chapter-grid-container');
             chapterContainer.innerHTML = '';
 
@@ -437,6 +485,49 @@
                     };
                 }
 
+                let progressHTML = '';
+                let statusText = 'FLIGHT READY';
+                let statusClass = '';
+
+                if (isOnline) {
+                    const p = getChapterProgress(i);
+                    if (p.overallPct >= 70) {
+                        statusText = `CLEARED (${p.overallPct}%)`;
+                        statusClass = 'status-cleared';
+                    } else if (p.overallPct > 0) {
+                        statusText = `DRILLING (${p.overallPct}%)`;
+                        statusClass = 'status-progress';
+                    } else {
+                        statusText = `READY (0%)`;
+                    }
+
+                    progressHTML = `
+                        <div class="chapter-progress-track">
+                            <div class="progress-bar-subrow">
+                                <div class="progress-sublabel">
+                                    <span>THEORY QUIZ</span>
+                                    <span style="color: var(--cyan-primary);">${p.quiz.total > 0 ? `${p.quiz.count}/${p.quiz.total} (${p.quiz.pct}%)` : 'N/A'}</span>
+                                </div>
+                                <div class="progress-track-bg">
+                                    <div class="progress-track-fill fill-cyan" style="width: ${p.quiz.pct}%;"></div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-subrow">
+                                <div class="progress-sublabel">
+                                    <span>NUMERICALS</span>
+                                    <span style="color: var(--gold-accent);">${p.num.count}/${p.num.total} (${p.num.pct}%)</span>
+                                </div>
+                                <div class="progress-track-bg">
+                                    <div class="progress-track-fill fill-amber" style="width: ${p.num.pct}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusText = 'IN PREP';
+                    statusClass = 'locked';
+                }
+
                 a.innerHTML = `
                     <div>
                         <div class="chapter-card-top">
@@ -446,13 +537,16 @@
                                 </svg>
                                 MODULE ${i < 10 ? '0' + i : i}
                             </span>
-                            <span class="chapter-status-pill ${isOnline ? '' : 'locked'}">
-                                ${isOnline ? 'FLIGHT READY' : 'IN PREP'}
+                            <span class="chapter-status-pill ${statusClass}">
+                                ${statusText}
                             </span>
                         </div>
                         <div class="chapter-name">${titleText}</div>
                         <div style="font-size: 0.8rem; color: var(--cyan-primary); font-family: var(--font-mono);">${meta.tag}</div>
                     </div>
+                    
+                    ${progressHTML}
+
                     <div class="chapter-meta">
                         <span>${meta.stats}</span>
                         <span style="color: ${isOnline ? 'var(--cyan-primary)' : 'var(--text-dim)'}; font-weight: 700;">

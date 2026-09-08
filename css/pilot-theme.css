@@ -1782,10 +1782,6 @@ body::before {
     .subtitle {
         font-size: 0.95rem;
     }
-    .module-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
     .module-card {
         padding: 30px 20px;
     }
@@ -1803,3 +1799,128 @@ body::before {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================================================
+   CHAPTER-WISE DUAL PROGRESS TRACKS (QUIZ & NUMERICALS)
+   ========================================================================== */
+.chapter-progress-track {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-bar-subrow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.progress-sublabel {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.progress-track-bg {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-track-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+.progress-track-fill.fill-cyan {
+    background: linear-gradient(90deg, #0284c7, var(--cyan-primary));
+    box-shadow: 0 0 8px var(--cyan-glow);
+}
+
+.progress-track-fill.fill-amber {
+    background: linear-gradient(90deg, #d97706, var(--gold-accent));
+    box-shadow: 0 0 8px var(--gold-glow);
+}
+
+.chapter-status-pill.status-cleared {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--green-cleared);
+    color: #6ee7b7;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.chapter-status-pill.status-progress {
+    background: rgba(0, 210, 255, 0.15);
+    border-color: var(--cyan-primary);
+    color: var(--cyan-primary);
+}
+
+/* Master Syllabus Progress Card in Hub */
+.overall-syllabus-card {
+    background: rgba(10, 16, 30, 0.75);
+    border: 1px solid var(--border-medium);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 25px;
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.overall-stats-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.overall-stat-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--font-mono);
+}
+
+.overall-stat-item .val {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-bright);
+}
+
+.overall-stat-item .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+/* Module Selection Progress inside chapters */
+.module-card-progress {
+    width: 100%;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.module-card-progress .prog-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    margin-bottom: 5px;
+    color: var(--text-muted);
+}
+

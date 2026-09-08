@@ -58,11 +58,23 @@
                         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                     </div>
                     <h3>Theory Quiz</h3>
-                    <p>66 Theory MCQs</p>
+                    <p id="quiz-card-count-text">66 Theory MCQs</p>
                     <div class="module-card-meta">
                         <span>DGCA Standard MCQs</span>
                         <span>Instant Scoring</span>
                     </div>
+
+                    <!-- Live Quiz Progress Bar -->
+                    <div class="module-card-progress">
+                        <div class="prog-info">
+                            <span>QUIZ PROGRESS</span>
+                            <span id="quiz-mod-prog-val" style="color: var(--cyan-primary); font-weight: 700;">0 / 66 (0%)</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-track-fill fill-cyan" id="quiz-mod-prog-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
                     <span class="module-card-badge">Launch Quiz →</span>
                 </div>
 
@@ -71,11 +83,23 @@
                         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
                     </div>
                     <h3>Numericals Engine</h3>
-                    <p>Step-by-Step Calculation Problems</p>
+                    <p id="num-card-count-text">3 Calculation Problems</p>
                     <div class="module-card-meta">
                         <span>DGCA Flight Calculations</span>
                         <span>Formulas & Keys</span>
                     </div>
+
+                    <!-- Live Numericals Progress Bar -->
+                    <div class="module-card-progress">
+                        <div class="prog-info">
+                            <span>CALCULATION PROGRESS</span>
+                            <span id="num-mod-prog-val" style="color: var(--gold-accent); font-weight: 700;">0 / 3 (0%)</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-track-fill fill-amber" id="num-mod-prog-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
                     <span class="module-card-badge" style="border-color: rgba(245, 158, 11, 0.3);">Launch Calculations →</span>
                 </div>
             </div>
@@ -205,10 +229,38 @@
     <!-- Scripts -->
     <script src="js/pilot-cockpit.js"></script>
     <script>
+        const CHAPTER_NUM = 9;
+
+        function updateModuleCardProgressUI() {
+            const p = getChapterProgress(CHAPTER_NUM);
+            const qVal = document.getElementById('quiz-mod-prog-val');
+            const qBar = document.getElementById('quiz-mod-prog-bar');
+            const nVal = document.getElementById('num-mod-prog-val');
+            const nBar = document.getElementById('num-mod-prog-bar');
+
+            if (qVal && qBar) {
+                qVal.textContent = `${p.quiz.count} / ${p.quiz.total} (${p.quiz.pct}%)`;
+                qBar.style.width = `${p.quiz.pct}%`;
+            }
+            if (nVal && nBar) {
+                nVal.textContent = `${p.num.count} / ${p.num.total} (${p.num.pct}%)`;
+                nBar.style.width = `${p.num.pct}%`;
+            }
+            const qSub = document.getElementById('quiz-card-count-text');
+            if (qSub && typeof quizData !== 'undefined') {
+                qSub.textContent = `${quizData.length} Theory MCQs`;
+            }
+            const nSub = document.getElementById('num-card-count-text');
+            if (nSub && typeof numericalsData !== 'undefined') {
+                nSub.textContent = `${numericalsData.length} Calculation Problems`;
+            }
+        }
+
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
             const target = document.getElementById(viewId);
             if (target) target.style.display = 'flex';
+            if (viewId === 'module-page') updateModuleCardProgressUI();
             playCockpitBeep('click');
         }
 
@@ -377,6 +429,7 @@
         function selectQuizOption(selectedIndex) {
             quizAnswers[currentQuizIndex] = selectedIndex;
             const isCorrect = selectedIndex === quizData[currentQuizIndex].correct;
+            recordQuizAnswer(CHAPTER_NUM, currentQuizIndex, isCorrect, quizData.length);
             playCockpitBeep(isCorrect ? 'correct' : 'wrong');
             renderQuiz();
         }
@@ -465,6 +518,7 @@
 
         function revealNumAns() {
             document.getElementById('num-ans-box').style.display = 'block';
+            recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
             playCockpitBeep('click');
         }
 
@@ -472,12 +526,21 @@
             const solBox = document.getElementById('num-sol-box');
             if (solBox) {
                 solBox.style.display = 'block';
+                recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
                 playCockpitBeep('click');
             }
         }
 
         function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
-        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+        function goNextNum() { 
+            if (currentNumIndex < numericalsData.length - 1) { 
+                recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
+                currentNumIndex++; 
+                renderNumerical(); 
+            } 
+        }
+
+        document.addEventListener('DOMContentLoaded', updateModuleCardProgressUI);
     </script>
 </body>
 </html>

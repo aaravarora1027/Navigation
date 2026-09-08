@@ -58,11 +58,23 @@
                         <svg viewBox="0 0 24 24" style="width: 40px; height: 40px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
                     </div>
                     <h3>Flight Calculation Engine</h3>
-                    <p>135 Class Notes & Book Calculations</p>
+                    <p id="num-card-count-text">135 Class Notes & Book Calculations</p>
                     <div class="module-card-meta">
                         <span>PNR Endurance Calculations</span>
                         <span>Equal Time Point (CP) Derivations</span>
                     </div>
+
+                    <!-- Live Numericals Progress Bar -->
+                    <div class="module-card-progress" style="margin-top: 20px;">
+                        <div class="prog-info">
+                            <span>CALCULATION PROGRESS</span>
+                            <span id="num-mod-prog-val" style="color: var(--gold-accent); font-weight: 700;">0 / 135 (0%)</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-track-fill fill-amber" id="num-mod-prog-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
                     <span class="module-card-badge" style="border-color: rgba(245, 158, 11, 0.3);">Launch Calculations Matrix →</span>
                 </div>
             </div>
@@ -119,10 +131,27 @@
     <!-- Scripts -->
     <script src="js/pilot-cockpit.js"></script>
     <script>
+        const CHAPTER_NUM = 11;
+
+        function updateModuleCardProgressUI() {
+            const p = getChapterProgress(CHAPTER_NUM);
+            const nVal = document.getElementById('num-mod-prog-val');
+            const nBar = document.getElementById('num-mod-prog-bar');
+            if (nVal && nBar) {
+                nVal.textContent = `${p.num.count} / ${p.num.total} (${p.num.pct}%)`;
+                nBar.style.width = `${p.num.pct}%`;
+            }
+            const nSub = document.getElementById('num-card-count-text');
+            if (nSub && typeof numericalsData !== 'undefined') {
+                nSub.textContent = `${numericalsData.length} Class Notes & Book Calculations`;
+            }
+        }
+
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
             const target = document.getElementById(viewId);
             if (target) target.style.display = 'flex';
+            if (viewId === 'module-page') updateModuleCardProgressUI();
             playCockpitBeep('click');
         }
 
@@ -846,16 +875,29 @@
 
         function revealNumAns() {
             document.getElementById('num-ans-box').style.display = 'block';
+            recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
             playCockpitBeep('click');
         }
 
         function revealNumSol() {
-            document.getElementById('num-sol-box').style.display = 'block';
-            playCockpitBeep('click');
+            const solBox = document.getElementById('num-sol-box');
+            if (solBox) {
+                solBox.style.display = 'block';
+                recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
+                playCockpitBeep('click');
+            }
         }
 
         function goPrevNum() { if (currentNumIndex > 0) { currentNumIndex--; renderNumerical(); } }
-        function goNextNum() { if (currentNumIndex < numericalsData.length - 1) { currentNumIndex++; renderNumerical(); } }
+        function goNextNum() { 
+            if (currentNumIndex < numericalsData.length - 1) { 
+                recordNumProgress(CHAPTER_NUM, currentNumIndex, numericalsData.length);
+                currentNumIndex++; 
+                renderNumerical(); 
+            } 
+        }
+
+        document.addEventListener('DOMContentLoaded', updateModuleCardProgressUI);
     </script>
 </body>
 </html>

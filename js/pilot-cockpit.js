@@ -727,3 +727,123 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.prepend(trafficLayer);
     }
 });
+
+// ==========================================
+// 10. CHAPTER-WISE PROGRESS TRACKING ENGINE
+// ==========================================
+const CHAPTER_TOTALS = {
+    1: { quiz: 19, num: 10, qName: "Theory Quiz", nName: "Numericals" },
+    2: { quiz: 16, num: 40, qName: "Theory Quiz", nName: "Numericals" },
+    3: { quiz: 12, num: 32, qName: "Theory Quiz", nName: "Numericals" },
+    4: { quiz: 22, num: 32, qName: "Theory Quiz", nName: "Numericals" },
+    5: { quiz: 6, num: 14, qName: "Theory Quiz", nName: "Numericals" },
+    6: { quiz: 4, num: 26, qName: "Theory Quiz", nName: "Numericals" },
+    7: { quiz: 100, num: 60, qName: "Practice Descents", nName: "Main Numericals" },
+    8: { quiz: 72, num: 89, qName: "Chart Theory", nName: "Scale Calculations" },
+    9: { quiz: 66, num: 3, qName: "Inertial Theory", nName: "Numericals" },
+    10: { quiz: 41, num: 29, qName: "Celestial Theory", nName: "Time Calculations" },
+    11: { quiz: 0, num: 135, qName: "Theory", nName: "Flight Calculations" }
+};
+
+function getChapterProgress(chNum) {
+    const meta = CHAPTER_TOTALS[chNum] || { quiz: 0, num: 0 };
+    
+    // Quiz Progress
+    let quizData = { answered: [], score: 0, total: meta.quiz };
+    try {
+        const stored = localStorage.getItem(`airnav_ch${chNum}_quiz`);
+        if (stored) quizData = JSON.parse(stored);
+    } catch(e) {}
+    quizData.total = meta.quiz;
+    const qCount = quizData.answered ? quizData.answered.length : 0;
+    const qPct = meta.quiz > 0 ? Math.round((qCount / meta.quiz) * 100) : 0;
+
+    // Num Progress
+    let numData = { completed: [], total: meta.num };
+    try {
+        const stored = localStorage.getItem(`airnav_ch${chNum}_num`);
+        if (stored) numData = JSON.parse(stored);
+    } catch(e) {}
+    numData.total = meta.num;
+    const nCount = numData.completed ? numData.completed.length : 0;
+    const nPct = meta.num > 0 ? Math.round((nCount / meta.num) * 100) : 0;
+
+    const totalItems = meta.quiz + meta.num;
+    const totalDone = qCount + nCount;
+    const overallPct = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
+
+    return {
+        quiz: { count: qCount, total: meta.quiz, pct: qPct, score: quizData.score || 0 },
+        num: { count: nCount, total: meta.num, pct: nPct },
+        overallPct,
+        totalDone,
+        totalItems
+    };
+}
+
+function recordQuizAnswer(chNum, qIndex, isCorrect, totalCount) {
+    const meta = CHAPTER_TOTALS[chNum] || { quiz: totalCount };
+    let data = { answered: [], score: 0, total: meta.quiz };
+    try {
+        const stored = localStorage.getItem(`airnav_ch${chNum}_quiz`);
+        if (stored) data = JSON.parse(stored);
+    } catch(e) {}
+    data.total = meta.quiz;
+    if (!data.answered) data.answered = [];
+    if (!data.answered.includes(qIndex)) {
+        data.answered.push(qIndex);
+        if (isCorrect) data.score = (data.score || 0) + 1;
+    }
+    localStorage.setItem(`airnav_ch${chNum}_quiz`, JSON.stringify(data));
+}
+
+function recordNumProgress(chNum, pIndex, totalCount) {
+    const meta = CHAPTER_TOTALS[chNum] || { num: totalCount };
+    let data = { completed: [], total: meta.num };
+    try {
+        const stored = localStorage.getItem(`airnav_ch${chNum}_num`);
+        if (stored) data = JSON.parse(stored);
+    } catch(e) {}
+    data.total = meta.num;
+    if (!data.completed) data.completed = [];
+    if (!data.completed.includes(pIndex)) {
+        data.completed.push(pIndex);
+    }
+    localStorage.setItem(`airnav_ch${chNum}_num`, JSON.stringify(data));
+}
+
+function getOverallSyllabusProgress() {
+    let totalQuizDone = 0, totalQuizAll = 0;
+    let totalNumDone = 0, totalNumAll = 0;
+
+    for (let i = 1; i <= 11; i++) {
+        const p = getChapterProgress(i);
+        totalQuizDone += p.quiz.count;
+        totalQuizAll += p.quiz.total;
+        totalNumDone += p.num.count;
+        totalNumAll += p.num.total;
+    }
+
+    const grandDone = totalQuizDone + totalNumDone;
+    const grandTotal = totalQuizAll + totalNumAll;
+    const grandPct = grandTotal > 0 ? Math.round((grandDone / grandTotal) * 100) : 0;
+
+    return {
+        quizDone: totalQuizDone,
+        quizAll: totalQuizAll,
+        numDone: totalNumDone,
+        numAll: totalNumAll,
+        grandDone,
+        grandTotal,
+        grandPct
+    };
+}
+
+function resetAllProgress() {
+    for (let i = 1; i <= 11; i++) {
+        localStorage.removeItem(`airnav_ch${i}_quiz`);
+        localStorage.removeItem(`airnav_ch${i}_num`);
+    }
+    localStorage.removeItem('pilot_flagged_q');
+}
+

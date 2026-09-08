@@ -58,11 +58,23 @@
                         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                     </div>
                     <h3>Practice Numericals</h3>
-                    <p>100 Rapid-Fire Descents Problems</p>
+                    <p id="quiz-card-count-text">100 Rapid-Fire Descents Problems</p>
                     <div class="module-card-meta">
                         <span>Speed Drills</span>
                         <span>ROD & Glidepath Intercept</span>
                     </div>
+
+                    <!-- Live Practice Progress Bar -->
+                    <div class="module-card-progress">
+                        <div class="prog-info">
+                            <span>DRILL PROGRESS</span>
+                            <span id="quiz-mod-prog-val" style="color: var(--cyan-primary); font-weight: 700;">0 / 100 (0%)</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-track-fill fill-cyan" id="quiz-mod-prog-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
                     <span class="module-card-badge">Launch Practice →</span>
                 </div>
 
@@ -71,11 +83,23 @@
                         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
                     </div>
                     <h3>Main Numericals</h3>
-                    <p>60 Step-by-Step Problems</p>
+                    <p id="num-card-count-text">60 Step-by-Step Problems</p>
                     <div class="module-card-meta">
                         <span>Detailed Derivations</span>
                         <span>Comprehensive DGCA Problems</span>
                     </div>
+
+                    <!-- Live Main Numericals Progress Bar -->
+                    <div class="module-card-progress">
+                        <div class="prog-info">
+                            <span>CALCULATION PROGRESS</span>
+                            <span id="num-mod-prog-val" style="color: var(--gold-accent); font-weight: 700;">0 / 60 (0%)</span>
+                        </div>
+                        <div class="progress-track-bg">
+                            <div class="progress-track-fill fill-amber" id="num-mod-prog-bar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
                     <span class="module-card-badge" style="border-color: rgba(245, 158, 11, 0.3);">Launch Main Numericals →</span>
                 </div>
             </div>
@@ -174,10 +198,38 @@
     <!-- Scripts -->
     <script src="js/pilot-cockpit.js"></script>
     <script>
+        const CHAPTER_NUM = 7;
+
+        function updateModuleCardProgressUI() {
+            const p = getChapterProgress(CHAPTER_NUM);
+            const qVal = document.getElementById('quiz-mod-prog-val');
+            const qBar = document.getElementById('quiz-mod-prog-bar');
+            const nVal = document.getElementById('num-mod-prog-val');
+            const nBar = document.getElementById('num-mod-prog-bar');
+
+            if (qVal && qBar) {
+                qVal.textContent = `${p.quiz.count} / ${p.quiz.total} (${p.quiz.pct}%)`;
+                qBar.style.width = `${p.quiz.pct}%`;
+            }
+            if (nVal && nBar) {
+                nVal.textContent = `${p.num.count} / ${p.num.total} (${p.num.pct}%)`;
+                nBar.style.width = `${p.num.pct}%`;
+            }
+            const qSub = document.getElementById('quiz-card-count-text');
+            if (qSub && typeof practiceData !== 'undefined') {
+                qSub.textContent = `${practiceData.length} Rapid-Fire Descents Problems`;
+            }
+            const nSub = document.getElementById('num-card-count-text');
+            if (nSub && typeof mainData !== 'undefined') {
+                nSub.textContent = `${mainData.length} Step-by-Step Problems`;
+            }
+        }
+
         function switchView(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
             const target = document.getElementById(viewId);
             if (target) target.style.display = 'flex';
+            if (viewId === 'module-page') updateModuleCardProgressUI();
             playCockpitBeep('click');
         }
 
@@ -313,11 +365,18 @@
 
         function revealPracAns() {
             document.getElementById('prac-ans-box').style.display = 'block';
+            recordQuizAnswer(CHAPTER_NUM, currentPracIndex, true, practiceData.length);
             playCockpitBeep('click');
         }
 
         function goPrevPrac() { if (currentPracIndex > 0) { currentPracIndex--; renderPractice(); } }
-        function goNextPrac() { if (currentPracIndex < practiceData.length - 1) { currentPracIndex++; renderPractice(); } }
+        function goNextPrac() { 
+            if (currentPracIndex < practiceData.length - 1) { 
+                recordQuizAnswer(CHAPTER_NUM, currentPracIndex, true, practiceData.length);
+                currentPracIndex++; 
+                renderPractice(); 
+            } 
+        }
 
         // ==========================================
         // MAIN NUMERICALS ARRAY (UNTOUCHED)
@@ -655,16 +714,26 @@
 
         function revealMainAns() {
             document.getElementById('main-ans-box').style.display = 'block';
+            recordNumProgress(CHAPTER_NUM, currentMainIndex, mainData.length);
             playCockpitBeep('click');
         }
 
         function revealMainSol() {
             document.getElementById('main-sol-box').style.display = 'block';
+            recordNumProgress(CHAPTER_NUM, currentMainIndex, mainData.length);
             playCockpitBeep('click');
         }
 
         function goPrevMain() { if (currentMainIndex > 0) { currentMainIndex--; renderMainNumerical(); } }
-        function goNextMain() { if (currentMainIndex < mainData.length - 1) { currentMainIndex++; renderMainNumerical(); } }
+        function goNextMain() { 
+            if (currentMainIndex < mainData.length - 1) { 
+                recordNumProgress(CHAPTER_NUM, currentMainIndex, mainData.length);
+                currentMainIndex++; 
+                renderMainNumerical(); 
+            } 
+        }
+
+        document.addEventListener('DOMContentLoaded', updateModuleCardProgressUI);
     </script>
 </body>
 </html>
